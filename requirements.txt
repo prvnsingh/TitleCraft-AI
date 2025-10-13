@@ -1,0 +1,33 @@
+# TitleCraft AI - Data Module Requirements
+# Install with: pip install -r requirements.txt
+
+# Core data processing libraries
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Optional: For enhanced data analysis and visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+scipy>=1.10.0
+
+# Web framework for API (if implementing the full system)
+fastapi>=0.100.0
+uvicorn>=0.20.0
+
+# LLM integration (choose one or more)
+openai>=1.0.0
+anthropic>=0.25.0
+
+# Utility libraries
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# Development and testing
+pytest>=7.0.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+
+# Jupyter notebook support (optional)
+jupyter>=1.0.0
+ipykernel>=6.0.0
