@@ -12,18 +12,16 @@ import pickle
 import logging
 from dataclasses import asdict
 
-from ..config import get_config
+from ..utils import BaseComponent
 
-logger = logging.getLogger(__name__)
-
-class CacheManager:
+class CacheManager(BaseComponent):
     """
     High-performance async caching manager with Redis backend.
     Provides intelligent caching for channel profiles, embeddings, and API responses.
     """
     
-    def __init__(self, redis_url: str = None):
-        self.config = get_config()
+    def __init__(self, redis_url: str = None, config=None):
+        super().__init__(config)
         self.redis_url = redis_url or self.config.get('redis_url', 'redis://localhost:6379')
         self.redis_client: Optional[redis.Redis] = None
         self.connection_pool = None
@@ -64,7 +62,7 @@ class CacheManager:
             
             # Test connection
             await self.redis_client.ping()
-            logger.info("Redis connection established successfully")
+            self.logger.info("Redis connection established successfully")
             
         except Exception as e:
             logger.error(f"Failed to initialize Redis: {e}")

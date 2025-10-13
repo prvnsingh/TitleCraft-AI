@@ -17,7 +17,7 @@ from prometheus_client import Counter, Histogram, Gauge, CollectorRegistry, gene
 from prometheus_client.exposition import make_asgi_app
 import structlog
 
-from ..config import get_config
+from ..utils import BaseComponent
 
 # Structured logging setup
 structlog.configure(
@@ -195,14 +195,14 @@ class PerformanceMetrics:
     cpu_usage: float = 0.0
     memory_usage: float = 0.0
 
-class MonitoringSystem:
+class MonitoringSystem(BaseComponent):
     """
     Comprehensive monitoring system for TitleCraft AI.
     Provides health checks, performance monitoring, and alerting.
     """
     
-    def __init__(self):
-        self.config = get_config()
+    def __init__(self, config=None):
+        super().__init__(config)
         self.metrics_collector = MetricsCollector()
         self.logger = structlog.get_logger(__name__)
         

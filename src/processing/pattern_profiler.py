@@ -13,10 +13,8 @@ import logging
 from datetime import datetime
 from dataclasses import dataclass
 
-from ..config import get_config
+from ..utils import BaseComponent
 from ..data.models import ChannelProfile, ChannelStats, TitlePatterns, VideoData
-
-logger = logging.getLogger(__name__)
 
 @dataclass
 class StructuralPattern:
@@ -37,7 +35,7 @@ class PatternCorrelation:
     overall_usage: float
     recommendation: str
 
-class EnhancedPatternProfiler:
+class EnhancedPatternProfiler(BaseComponent):
     """
     Enhanced pattern profiler with advanced analysis capabilities.
     
@@ -50,7 +48,7 @@ class EnhancedPatternProfiler:
     """
     
     def __init__(self, config=None):
-        self.config = config or get_config()
+        super().__init__(config)
         
         # Enhanced pattern definitions
         self.structural_patterns = self._define_structural_patterns()
@@ -173,10 +171,10 @@ class EnhancedPatternProfiler:
         Returns:
             Enhanced profile dictionary with detailed pattern analysis
         """
-        logger.info(f"Creating enhanced profile for channel {channel_id}")
+        self.logger.info(f"Creating enhanced profile for channel {channel_id}")
         
         if len(channel_data) < self.config.data.min_examples_for_profile:
-            logger.warning(f"Channel {channel_id} has only {len(channel_data)} videos, minimum {self.config.data.min_examples_for_profile} recommended")
+            self.logger.warning(f"Channel {channel_id} has only {len(channel_data)} videos, minimum {self.config.data.min_examples_for_profile} recommended")
         
         # Basic metrics
         basic_profile = self._calculate_basic_metrics(channel_data)

@@ -15,22 +15,20 @@ from datetime import datetime, timedelta
 import asyncio
 from dataclasses import asdict
 
-from ..config import get_config
+from ..utils import BaseComponent
 from .models import ChannelProfile, VideoData, ChannelStats, DataQualityReport
 from .loader import DataLoader
 from .validator import DataValidator
 from .profiler import ChannelProfiler
 
-logger = logging.getLogger(__name__)
-
-class DataStore:
+class DataStore(BaseComponent):
     """
     Enhanced data store that manages all training data and metadata.
     Provides caching, validation, and efficient access to channel data.
     """
     
     def __init__(self, config=None):
-        self.config = config or get_config()
+        super().__init__(config)
         self.data_path = Path(self.config.data.data_directory)
         self.data_path.mkdir(parents=True, exist_ok=True)
         
@@ -58,7 +56,7 @@ class DataStore:
         for dir_name in required_dirs:
             (self.data_path / dir_name).mkdir(exist_ok=True)
         
-        logger.info(f"Data store initialized at {self.data_path}")
+        self.logger.info(f"Data store initialized at {self.data_path}")
     
     def load_training_data(self, 
                           file_path: Optional[str] = None, 
@@ -105,7 +103,7 @@ class DataStore:
             # Save metadata
             self._save_data_metadata(file_path, data, quality_report)
             
-            logger.info(f"Successfully loaded {len(data)} records from {file_path}")
+            self.logger.info(f"Successfully loaded {len(data)} records from {file_path}")
             return data
             
         except Exception as e:
@@ -318,13 +316,13 @@ class DataStore:
         data_string = data.to_string()
         return hashlib.sha256(data_string.encode()).hexdigest()[:16]
 
-class ChannelProfileManager:
+class ChannelProfileManager(BaseComponent):
     """
     Manages channel profiles with caching and automatic updates
     """
     
-    def __init__(self, data_store: Optional[DataStore] = None):
-        self.config = get_config()
+    def __init__(self, data_store: Optional[DataStore] = None, config=None):
+        super().__init__(config)
         self.data_store = data_store or DataStore()
         self.profiles_path = Path(self.config.data.data_directory) / "profiles"
         self.profiles_path.mkdir(parents=True, exist_ok=True)

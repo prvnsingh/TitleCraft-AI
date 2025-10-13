@@ -30,9 +30,7 @@ except ImportError:
     SKLEARN_AVAILABLE = False
 
 from ..data.models import VideoData
-from ..config import get_config
-
-logger = logging.getLogger(__name__)
+from ..utils import BaseComponent
 
 
 @dataclass
@@ -56,7 +54,7 @@ class EmbeddingMetadata:
     version: str
 
 
-class SemanticMatcher:
+class SemanticMatcher(BaseComponent):
     """
     Semantic similarity engine for finding contextually relevant titles.
     
@@ -69,7 +67,7 @@ class SemanticMatcher:
     """
     
     def __init__(self, config=None):
-        self.config = config or get_config()
+        super().__init__(config)
         
         # Initialize models
         self.sentence_transformer = None
@@ -127,7 +125,7 @@ class SemanticMatcher:
             logger.warning("No videos provided for index building")
             return
         
-        logger.info(f"Building embeddings index from {len(videos)} videos")
+        self.logger.info(f"Building embeddings index from {len(videos)} videos")
         start_time = time.time()
         
         # Extract titles
@@ -143,7 +141,7 @@ class SemanticMatcher:
             raise RuntimeError("No embedding models available")
         
         build_time = time.time() - start_time
-        logger.info(f"Index built in {build_time:.2f}s with {len(videos)} videos")
+        self.logger.info(f"Index built in {build_time:.2f}s with {len(videos)} videos")
         
         # Save index
         self._save_index()

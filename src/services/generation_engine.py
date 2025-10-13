@@ -11,7 +11,7 @@ from dataclasses import dataclass, asdict
 import time
 from datetime import datetime
 
-from ..config import get_config
+from ..utils import BaseComponent
 from ..data import DataStore, ChannelProfileManager, VideoData, ChannelProfile
 from ..processing.pattern_profiler import EnhancedPatternProfiler
 from ..processing.llm_orchestrator import (
@@ -20,8 +20,6 @@ from ..processing.llm_orchestrator import (
     TitleGenerationResponse,
     GeneratedTitle
 )
-
-logger = logging.getLogger(__name__)
 
 @dataclass
 class TitleRequest:
@@ -43,7 +41,7 @@ class TitleResult:
     pattern_analysis: Dict[str, Any]
     performance_prediction: Optional[float] = None
     
-class TitleGenerationEngine:
+class TitleGenerationEngine(BaseComponent):
     """
     Main title generation engine that orchestrates the entire pipeline.
     
@@ -56,7 +54,7 @@ class TitleGenerationEngine:
     """
     
     def __init__(self, config=None):
-        self.config = config or get_config()
+        super().__init__(config)
         
         # Initialize core components
         self.data_store = DataStore(config=self.config)
@@ -72,7 +70,7 @@ class TitleGenerationEngine:
             'failed_generations': 0
         }
         
-        logger.info("TitleGenerationEngine initialized")
+        self.logger.info("TitleGenerationEngine initialized")
     
     async def generate_titles(self, request: TitleRequest) -> Dict[str, Any]:
         """
@@ -87,7 +85,7 @@ class TitleGenerationEngine:
         start_time = time.time()
         
         try:
-            logger.info(f"Generating titles for channel {request.channel_id}: '{request.idea}'")
+            self.logger.info(f"Generating titles for channel {request.channel_id}: '{request.idea}'")
             
             # Step 1: Get or create channel profile
             channel_profile = await self._get_channel_profile(
@@ -155,14 +153,14 @@ class TitleGenerationEngine:
                 }
             }
             
-            logger.info(f"Successfully generated {len(enhanced_titles)} titles in {processing_time:.2f}s")
+            self.logger.info(f"Successfully generated {len(enhanced_titles)} titles in {processing_time:.2f}s")
             return response
             
         except Exception as e:
             processing_time = time.time() - start_time
             self._update_generation_metrics(processing_time, success=False)
             
-            logger.error(f"Title generation failed: {e}")
+            self.logger.error(f"Title generation failed: {e}")
             
             # Return error response with fallback
             return self._create_error_response(request, str(e), processing_time)
@@ -188,7 +186,7 @@ class TitleGenerationEngine:
             return profile
             
         except Exception as e:
-            logger.error(f"Failed to get channel profile for {channel_id}: {e}")
+            self.logger.error(f"Failed to get channel profile for {channel_id}: {e}")
             # Return a basic fallback profile
             return self._create_fallback_profile(channel_id)
     
@@ -240,7 +238,7 @@ class TitleGenerationEngine:
             return [video for video, _ in similar_videos[:max_examples]]
             
         except Exception as e:
-            logger.warning(f"Failed to find similar examples: {e}")
+            self.logger.warning(f"Failed to find similar examples: {e}")
             return []
     
     async def _enhance_generated_titles(self,
@@ -281,7 +279,7 @@ class TitleGenerationEngine:
                 enhanced_titles.append(enhanced_title)
                 
             except Exception as e:
-                logger.warning(f"Failed to enhance title '{title.title}': {e}")
+                self.logger.warning(f"Failed to enhance title '{title.title}': {e}")
                 # Add with basic enhancement
                 enhanced_titles.append(TitleResult(
                     title=title.title,
@@ -380,7 +378,7 @@ class TitleGenerationEngine:
             return float(predicted_views)
             
         except Exception as e:
-            logger.warning(f"Performance prediction failed: {e}")
+            self.logger.warning(f"Performance prediction failed: {e}")
             return None
     
     def _rank_titles(self, titles: List[TitleResult]) -> List[TitleResult]:

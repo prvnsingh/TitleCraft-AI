@@ -56,10 +56,8 @@ try:
 except ImportError:
     LANGCHAIN_AVAILABLE = False
 
-from ..config import get_config
+from ..utils import BaseComponent
 from ..data.models import ChannelProfile, VideoData
-
-logger = logging.getLogger(__name__)
 
 @dataclass 
 class TitleGenerationRequest:
@@ -90,7 +88,7 @@ class TitleGenerationResponse:
     processing_time: float
     request_id: str
 
-class LLMOrchestrator:
+class LLMOrchestrator(BaseComponent):
     """
     Manages LLM interactions with adaptive prompting and multiple provider support.
     
@@ -103,7 +101,7 @@ class LLMOrchestrator:
     """
     
     def __init__(self, config=None):
-        self.config = config or get_config()
+        super().__init__(config)
         
         # Initialize LLM systems
         self._initialize_clients()
@@ -128,34 +126,34 @@ class LLMOrchestrator:
         # OpenAI client
         if self.config.llm.provider == "openai" and openai is not None:
             if not self.config.llm.api_key:
-                logger.warning("OpenAI API key not configured")
+                self.logger.warning("OpenAI API key not configured")
             else:
                 self.clients['openai'] = openai.OpenAI(
                     api_key=self.config.llm.api_key,
                     timeout=self.config.llm.timeout
                 )
-                logger.info("OpenAI client initialized")
+                self.logger.info("OpenAI client initialized")
         
         # Anthropic client
         if self.config.llm.provider == "anthropic" and anthropic is not None:
             if not self.config.llm.api_key:
-                logger.warning("Anthropic API key not configured")
+                self.logger.warning("Anthropic API key not configured")
             else:
                 self.clients['anthropic'] = anthropic.Anthropic(
                     api_key=self.config.llm.api_key,
                     timeout=self.config.llm.timeout
                 )
-                logger.info("Anthropic client initialized")
+                self.logger.info("Anthropic client initialized")
         
         if not self.clients:
-            logger.warning("No LLM clients initialized - title generation will not work")
+            self.logger.warning("No LLM clients initialized - title generation will not work")
     
     def _initialize_langchain(self):
         """Initialize LangChain LLM manager if available and configured"""
         self.langchain_manager = None
         
         if not LANGCHAIN_AVAILABLE:
-            logger.info("LangChain not available - using direct API integration only")
+            self.logger.info("LangChain not available - using direct API integration only")
             return
         
         if not self.config.llm.use_langchain:
@@ -282,7 +280,7 @@ Generate titles that would realistically achieve high engagement for this channe
         start_time = time.time()
         request_id = self._generate_request_id()
         
-        logger.info(f"Generating titles for request {request_id}")
+        self.logger.info(f"Generating titles for request {request_id}")
         
         try:
             # Update stats
@@ -320,7 +318,7 @@ Generate titles that would realistically achieve high engagement for this channe
                 request_id=request_id
             )
             
-            logger.info(f"Successfully generated {len(titles)} titles in {processing_time:.2f}s")
+            self.logger.info(f"Successfully generated {len(titles)} titles in {processing_time:.2f}s")
             return response
             
         except Exception as e:
