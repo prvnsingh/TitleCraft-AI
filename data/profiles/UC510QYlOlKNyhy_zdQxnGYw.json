@@ -1,0 +1,305 @@
+{
+  "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+  "channel_type": "military/war",
+  "stats": {
+    "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+    "total_videos": 107,
+    "avg_views": 6149.9626168224295,
+    "median_views": 2101.0,
+    "min_views": 193,
+    "max_views": 59299,
+    "total_views": 658046,
+    "std_views": 11065.716136844956,
+    "high_performer_threshold": 5981.8
+  },
+  "title_patterns": {
+    "avg_length_words": 6.869158878504673,
+    "std_length_words": 2.1663704611071535,
+    "avg_length_chars": 39.55140186915888,
+    "question_ratio": 0.14018691588785046,
+    "numeric_ratio": 0.22429906542056074,
+    "superlative_ratio": 0.21495327102803738,
+    "emotional_hook_ratio": 0.04672897196261682,
+    "punctuation_patterns": {
+      "exclamation": 0.0,
+      "question": 0.04672897196261682,
+      "colon": 0.037383177570093455,
+      "dash": 0.16822429906542055,
+      "pipe": 0.0,
+      "parentheses": 0.1588785046728972,
+      "brackets": 0.0
+    },
+    "common_words": [
+      [
+        "war",
+        22
+      ],
+      [
+        "history",
+        18
+      ],
+      [
+        "s",
+        16
+      ],
+      [
+        "ww2",
+        12
+      ],
+      [
+        "most",
+        10
+      ],
+      [
+        "soldiers",
+        9
+      ],
+      [
+        "who",
+        8
+      ],
+      [
+        "life",
+        8
+      ],
+      [
+        "guns",
+        8
+      ],
+      [
+        "why",
+        7
+      ],
+      [
+        "you",
+        7
+      ],
+      [
+        "tank",
+        7
+      ],
+      [
+        "cross",
+        7
+      ],
+      [
+        "military",
+        6
+      ],
+      [
+        "inside",
+        6
+      ]
+    ],
+    "common_bigrams": [
+      [
+        "in history",
+        10
+      ],
+      [
+        "in war",
+        8
+      ],
+      [
+        "life inside",
+        6
+      ],
+      [
+        "cross section",
+        6
+      ],
+      [
+        "of ww2",
+        5
+      ],
+      [
+        "inside a",
+        4
+      ],
+      [
+        "of war",
+        4
+      ],
+      [
+        "the most",
+        4
+      ],
+      [
+        "in ww2",
+        3
+      ],
+      [
+        "korean war",
+        3
+      ]
+    ],
+    "common_trigrams": [
+      [
+        "life inside a",
+        4
+      ],
+      [
+        "tank cross section",
+        2
+      ],
+      [
+        "tank of ww2",
+        2
+      ],
+      [
+        "the korean war",
+        2
+      ],
+      [
+        "soldiers of war",
+        2
+      ],
+      [
+        "the most terrifying",
+        2
+      ],
+      [
+        "pov you wake",
+        2
+      ],
+      [
+        "you wake up",
+        2
+      ]
+    ]
+  },
+  "high_performers": [
+    {
+      "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+      "video_id": "hpz-w7vTDMA",
+      "title": "Life Inside The Flattest Tank - STRV 103 (Cross Section)",
+      "summary": "The Stridsvagn 103, an innovative Swedish turretless main battle tank designed for defensive warfare during the Cold War, featured a low silhouette, fixed gun, and advanced suspension but never saw combat and was ultimately a unique but dead-end development in tank design.",
+      "views_in_period": 59299
+    },
+    {
+      "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+      "video_id": "CvE-r4ver5I",
+      "title": "Life Inside A Panther Turret Bunker (Cross Section)",
+      "summary": "During World War II, Germany repurposed surplus Panther tank turrets into heavily armored stationary bunkers—known as \"Pantherturm\"—to reinforce defensive lines, making efficient use of available resources in response to mounting losses and logistical challenges.",
+      "views_in_period": 53229
+    },
+    {
+      "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+      "video_id": "zx0L5fCh0AU",
+      "title": "WW2 Guns Still Being Used Today",
+      "summary": "This video explores several World War II-era weapons—such as the STG44, M2 Browning, Lee-Enfield rifle, MG42, Madsen LMG, M1911 pistol, M3 Grease Gun, M101 Howitzer, and D44 gun—that remain in use today by various militaries and insurgent groups worldwide.",
+      "views_in_period": 49020
+    },
+    {
+      "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+      "video_id": "g0IelB_oxls",
+      "title": "Dirtiest Tricks Used in War",
+      "summary": "The video explores some of the dirtiest and most underhanded tactics used in warfare throughout history, from sabotaged ammunition in Vietnam to psychological and physical warfare in conflicts ancient and modern, highlighting how pragmatism often overrides honor in battle.",
+      "views_in_period": 35830
+    },
+    {
+      "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+      "video_id": "RTIOOxB4IAY",
+      "title": "Overpowered Guns used to Cheat in Battle",
+      "summary": "The video explores how various weapons—including shotguns, Uzis, crossbows, air rifles, bayonets, Gatling guns, Tommy guns, and needle guns—were viewed as unfair, dishonorable, or controversial in warfare due to their technological advantages or perceived cruelty.",
+      "views_in_period": 33704
+    },
+    {
+      "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+      "video_id": "ydo1TLuOHiY",
+      "title": "The Hero who stood up to the My Lai Massacre (1968)",
+      "summary": "The video recounts how helicopter pilot Hugh Thompson and his crew intervened during the My Lai Massacre in Vietnam, saving civilian lives, reporting the atrocity, and later receiving military honors for their bravery in defying orders to protect innocents.",
+      "views_in_period": 29557
+    },
+    {
+      "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+      "video_id": "HNEnSEZUAjQ",
+      "title": "The Horrors of the Coconut Prison",
+      "summary": "The video details the extreme torture, inhumane conditions, and mass suffering inflicted on tens of thousands of communist prisoners at Vietnam's Coconut Tree Prison during the war, highlighting its notorious brutality, rare escapes, and eventual closure after 1973.",
+      "views_in_period": 28358
+    },
+    {
+      "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+      "video_id": "C4nu_jbrOpE",
+      "title": "Most Unfair Wars in History",
+      "summary": "This video explores five of the most one-sided wars in history—including the Anglo-Zanzibar War, Persian Gulf War, U.S. invasion of Grenada, Italian invasion of Ethiopia, and the Spanish-American War—highlighting overwhelming disparities in military power and resulting swift victories.",
+      "views_in_period": 27559
+    },
+    {
+      "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+      "video_id": "1n4aM8gWWxo",
+      "title": "Oversized Guns",
+      "summary": "This video explores the history and purposes of various oversized firearms—including punt guns for hunting, giant training rifles, anti-tank weapons, and the Afghan jezail musket—highlighting their unique roles, impact, and eventual obsolescence, with an ad for Invideo AI at the end.",
+      "views_in_period": 26655
+    },
+    {
+      "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+      "video_id": "u1l0QRmajXM",
+      "title": "History's Biggest Disappointments",
+      "summary": "This video explores some of history’s greatest letdowns—such as the Titanic, the Gallipoli campaign, the Warsaw Uprising, the Spanish Armada, the Maji Maji Rebellion, and Roman Emperor Didius Julianus—where soaring expectations ended in disastrous reality.",
+      "views_in_period": 20957
+    }
+  ],
+  "success_factors": {
+    "optimal_title_length": {
+      "high_performers_avg": 6.3,
+      "overall_avg": 6.869158878504673,
+      "recommendation": "Current average length (6.9 words) is optimal"
+    },
+    "successful_patterns": {
+      "question_usage": 0.0,
+      "numeric_usage": 0.3,
+      "superlative_usage": 0.2,
+      "emotional_usage": 0.0
+    },
+    "power_words": [
+      [
+        "guns",
+        3
+      ],
+      [
+        "used",
+        3
+      ],
+      [
+        "life",
+        2
+      ],
+      [
+        "inside",
+        2
+      ],
+      [
+        "cross",
+        2
+      ],
+      [
+        "section",
+        2
+      ],
+      [
+        "history",
+        2
+      ],
+      [
+        "flattest",
+        1
+      ],
+      [
+        "tank",
+        1
+      ],
+      [
+        "strv",
+        1
+      ]
+    ],
+    "successful_templates": [
+      "Life Inside",
+      "The Hero who",
+      "The Horrors of"
+    ]
+  },
+  "created_at": "2025-10-13T10:34:57.719500",
+  "data_version_hash": "bf045c084cf8ac00"
+}

@@ -3,13 +3,17 @@ Data analyzer module for TitleCraft AI.
 Performs statistical analysis and generates insights from YouTube video data.
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Any, Tuple
+# Standard library imports
+import logging
 import re
 from collections import Counter
-import logging
+from typing import Dict, List, Any, Tuple
 
+# Third-party imports
+import numpy as np
+import pandas as pd
+
+# Local imports
 from .models import ChannelStats, DatasetSummary
 
 logger = logging.getLogger(__name__)

@@ -108,7 +108,7 @@ loader.export_processed_data("output.csv")
 validator = DataValidator()
 quality_report = validator.validate_dataset(data)
 
-print(f"Quality Score: {quality_report.overall_score}")
+print(f"Quality Score: {quality_report.quality_score}")
 print(f"Issues Found: {len(quality_report.issues)}")
 ```
 

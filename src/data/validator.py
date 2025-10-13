@@ -3,12 +3,16 @@ Data validator module for TitleCraft AI.
 Handles data quality assessment and validation.
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Any
-import re
+# Standard library imports
 import logging
+import re
+from typing import Dict, List, Any
 
+# Third-party imports
+import numpy as np
+import pandas as pd
+
+# Local imports
 from .models import DataQualityReport
 
 logger = logging.getLogger(__name__)

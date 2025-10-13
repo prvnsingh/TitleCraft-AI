@@ -3,15 +3,19 @@ Channel profiler module for TitleCraft AI.
 Creates detailed profiles for each YouTube channel based on successful patterns.
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Any, Optional
-from collections import Counter
-import re
+# Standard library imports
 import json
-from datetime import datetime
 import logging
+import re
+from collections import Counter
+from datetime import datetime
+from typing import Dict, List, Any, Optional
 
+# Third-party imports
+import numpy as np
+import pandas as pd
+
+# Local imports
 from .models import ChannelProfile, ChannelStats, TitlePatterns, VideoData
 from .analyzer import DataAnalyzer
 

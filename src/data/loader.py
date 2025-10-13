@@ -3,13 +3,16 @@ Data loader module for TitleCraft AI.
 Handles loading, parsing, and initial validation of training data.
 """
 
-import pandas as pd
-import numpy as np
+# Standard library imports
 import hashlib
-from typing import Optional, Dict, List
-from pathlib import Path
 import logging
+from pathlib import Path
+from typing import Optional, Dict, List
 
+# Third-party imports
+import pandas as pd
+
+# Local imports
 from .models import VideoData, DatasetSummary, DataQualityReport
 from .validator import DataValidator
 
