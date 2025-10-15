@@ -37,6 +37,35 @@ export OPENAI_API_KEY=your_api_key_here
 **✅ Server ready at**: http://localhost:8000
 - **Interactive docs**: http://localhost:8000/docs  
 - **Health check**: http://localhost:8000/health
+- **LLM service status**: http://localhost:8000/llm/status
+
+## 🔧 Enhanced LLM Service
+
+TitleCraft AI now includes a powerful LangChain-based LLM service with multiple provider support:
+
+### Supported Providers
+- **OpenAI**: GPT-3.5-turbo, GPT-4 (fast and reliable)
+- **Anthropic**: Claude-3 models (advanced reasoning)
+- **Ollama**: Local models (privacy-focused)
+
+### Key Features
+- **LangSmith Tracing**: Monitor and debug LLM interactions
+- **Plug-and-Play**: Switch between providers easily
+- **Streaming Support**: Real-time response generation
+- **Fallback Mechanisms**: Graceful degradation
+
+### Quick Setup
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your API keys
+OPENAI_API_KEY=your_key_here
+ANTHROPIC_API_KEY=your_key_here
+LANGCHAIN_API_KEY=your_langsmith_key_here  # Optional
+```
+
+See [LLM Service Documentation](docs/LLM_SERVICE.md) for detailed usage.
 
 
 ## 🏗️ Minimal Architecture
