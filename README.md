@@ -2,7 +2,6 @@
 
 **A streamlined agentic workflow that learns from high-performing YouTube titles and generates optimized titles for new video ideas.**
 
-> **🎯 Minimal Version**: Reduced from 60+ files to 7 essential files while preserving full functionality.
 
 ## 🚀 Quick Start
 
