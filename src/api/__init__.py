@@ -1,17 +1,14 @@
 """
-TitleCraft AI API Module
+TitleCraft AI API Module - Minimal Implementation
 
-Production FastAPI application with:
-- RESTful title generation endpoints
+Simple FastAPI application with:
+- Core title generation endpoint
 - Request/response validation with Pydantic
-- Rate limiting and authentication
 - Interactive API documentation
-- Comprehensive error handling
 """
 
-from .production_app import create_app, app
+from .production_app import app
 
 __all__ = [
-    "create_app",
     "app",
 ]

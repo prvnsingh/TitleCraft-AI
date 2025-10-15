@@ -1,53 +1,23 @@
-# TitleCraft AI - Development Dependencies
-# For local development and testing: pip install -r requirements.txt
+# TitleCraft AI - Minimal Dependencies for Take-Home Task
+# Essential dependencies only
 
-# Core framework and API
+# Core API framework
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
-gunicorn>=21.2.0
 pydantic>=2.4.0
 
-# HTTP client libraries
-aiohttp>=3.9.0
-httpx>=0.25.0
-aiofiles>=23.0.0
-
-# Data processing and ML
+# Data processing
 pandas>=2.1.0
 numpy>=1.24.0
-scikit-learn>=1.3.0
-sentence-transformers>=2.2.0
 
-# LLM providers
+# LLM integration
 openai>=1.3.0
-anthropic>=0.7.0
 
-# Infrastructure  
-redis>=5.0.0
+# Environment management
 python-dotenv>=1.0.0
-python-multipart>=0.0.6
 
-# Monitoring and logging
-structlog>=23.2.0
-prometheus-client>=0.19.0
-
-# Development and testing
+# Development/testing
 pytest>=7.4.0
-pytest-asyncio>=0.21.0
-black>=23.0.0
-flake8>=6.0.0
-mypy>=1.0.0
-
-# Data visualization (for development/analysis)
-matplotlib>=3.6.0
-seaborn>=0.12.0
-
-# Jupyter notebook support (optional)
-jupyter>=1.0.0
-ipykernel>=6.0.0
-
-# Optional LLM providers (uncomment as needed)
-# langchain>=0.1.0
 # langchain-openai>=0.1.0  
 # langchain-anthropic>=0.1.0
 # transformers>=4.30.0

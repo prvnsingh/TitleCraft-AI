@@ -1,90 +1,133 @@
-# TitleCraft AI
+# TitleCraft AI - Take-Home Task
 
-Production-ready YouTube title generation system combining pattern analysis with multi-model LLM orchestration for high-performing content creation.
+A simple agentic workflow that learns from high-performing YouTube titles and generates optimized titles for new video ideas.
 
 ## 🚀 Quick Start
 
-```bash
-# Development setup
-pip install -r requirements.txt
-python -m src.api.production_app
+### Prerequisites
+- Python 3.8+
+- OpenAI API key
 
-# Production deployment  
-docker-compose -f docker-compose.prod.yml up -d
+### Setup & Run
+
+1. **Install dependencies**
+```bash
+pip install -r requirements.txt
 ```
+
+2. **Set OpenAI API Key**
+```bash
+# Windows
+set OPENAI_API_KEY=your_api_key_here
+
+# Linux/Mac  
+export OPENAI_API_KEY=your_api_key_here
+```
+
+3. **Run the application**
+```bash
+python -m src.api.production_app
+```
+
+The API will be available at: http://localhost:8000
+
+4. **View API documentation**
+- Interactive docs: http://localhost:8000/docs
+- API specification: http://localhost:8000/redoc
 
 ## 🏗️ Architecture
 
-**Production-grade system with:**
-- Multi-LLM orchestration (OpenAI, Anthropic, Ollama, HuggingFace)
-- Redis caching with circuit breakers
-- Prometheus monitoring and structured logging
-- FastAPI with rate limiting and validation
-- Docker deployment with health checks
-
-## 📁 Project Structure
-
+**Simple 3-layer workflow:**
 ```
-src/
-├── api/               # FastAPI production application
-├── data/              # Data models and processing
-├── processing/        # Pattern analysis and LLM orchestration
-├── services/          # Business logic engines
-├── infrastructure/    # Caching, monitoring, circuit breakers
-└── config/            # Configuration management
+CSV Data → Pattern Analysis → LLM Generation → API Response
+    ↓              ↓              ↓         ↓
+Data Loader    Channel         OpenAI     FastAPI
+              Analysis         API        Endpoint
+```
 
-tests/                 # Test suite
-data/                  # Runtime data storage
+## � API Usage
+
+### Generate Titles
+
+**Endpoint:** `POST /generate`
+
+**Request:**
+```json
+{
+  "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+  "idea": "How modern warfare tactics evolved from historical battles"
+}
+```
+
+**Response:**
+```json
+{
+  "titles": [
+    {
+      "title": "How Modern Military Tactics Were Born from Ancient Warfare",
+      "reasoning": "Uses 'How' question format (found in 40% of top performers) and includes numbered elements. Matches channel's successful pattern of historical military analysis with modern relevance."
+    },
+    {
+      "title": "Military Evolution: From Ancient Battlefields to Modern Combat",
+      "reasoning": "Follows the channel's successful 'Topic: Comparison' format and uses common high-performing words like 'Military' and 'Combat' found in top titles."
+    }
+  ],
+  "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+  "idea": "How modern warfare tactics evolved from historical battles"
+}
 ```
 
 ## 🔧 Core Features
 
-- **Channel profiling** with performance pattern extraction
-- **Multi-model orchestration** with intelligent fallbacks
-- **Adaptive prompting** based on channel characteristics
-- **Pattern-guided generation** with explainable reasoning
-- **Async caching** with Redis and circuit breakers
-- **Comprehensive monitoring** with Prometheus metrics
+- **Channel-Specific Learning**: Analyzes patterns unique to each channel
+- **Data-Grounded Reasoning**: Each title explains which successful patterns it uses
+- **Pattern Analysis**: Identifies successful title characteristics (length, questions, numbers, common words)
+- **LLM Integration**: Uses OpenAI GPT-3.5 with contextual prompting
+- **Fallback Generation**: Works even if LLM is unavailable
 
-## 🚦 API Endpoints
+## � Testing the API
 
+### Using curl:
 ```bash
-POST /api/v1/generate    # Generate titles for video content
-GET  /api/v1/health      # System health and status
-GET  /docs               # Interactive API documentation
+curl -X POST "http://localhost:8000/generate" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "channel_id": "UC510QYlOlKNyhy_zdQxnGYw",
+       "idea": "The strategy behind famous military victories"
+     }'
 ```
 
-## 🐳 Deployment
+### Using Python:
+```python
+import requests
 
-**Docker (Production)**
-```bash
-docker-compose -f docker-compose.prod.yml up -d
+response = requests.post("http://localhost:8000/generate", json={
+    "channel_id": "UC510QYlOlKNyhy_zdQxnGYw", 
+    "idea": "The strategy behind famous military victories"
+})
+
+print(response.json())
 ```
 
-**Local Development**  
-```bash
-python -m src.api.production_app
-```
+## 🎬 Available Test Channels
 
-## 🧪 Testing
+The training data includes 3 YouTube channels. Use any of these channel IDs:
+- `UC510QYlOlKNyhy_zdQxnGYw` (Historical/Military content)
 
-```bash
-# Run all tests
-python -m pytest tests/
+## 🧪 Key Implementation Details
 
-# Performance tests  
-python -m pytest tests/test_performance.py -v
-```
+### Pattern Analysis
+- Identifies top 30% performing titles per channel
+- Analyzes: title length, question usage, numbers, exclamations, common words
+- Uses patterns to guide LLM generation
 
-## � Security & Performance
-
-- Input validation with Pydantic models
-- Rate limiting and CORS protection
-- Circuit breakers for API resilience
-- Redis caching for <200ms response times
-- Structured logging and Prometheus metrics
+### Title Generation
+1. **Context Building**: Creates prompt with channel's successful patterns
+2. **LLM Generation**: Uses OpenAI GPT-3.5 with pattern context  
+3. **Reasoning**: Each title explains which patterns it leverages
+4. **Confidence Scoring**: Based on pattern alignment
 
 ---
 
-**Built for production scalability and reliability.**
+**Built for the Electrify Applied AI Engineer take-home task - focused on core functionality and clear presentation for CTO review.**
 

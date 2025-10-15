@@ -1,34 +1,18 @@
 """
-TitleCraft AI - Production-ready YouTube title generation system.
+TitleCraft AI - Simple YouTube title generation system.
 
-A comprehensive system for generating high-performance YouTube titles using
-multi-model LLM orchestration, intelligent caching, and production monitoring.
+Minimal implementation for the take-home task focusing on core requirements:
+- FastAPI endpoint for title generation
+- Channel pattern analysis from CSV data
+- LLM-based title generation with reasoning
 """
 
 __version__ = "1.0.0"
 __author__ = "TitleCraft AI Team"
 
-# Core data models (always available)
-from .data import ChannelProfile, VideoData
-
-# Processing components (basic functionality)
-from .processing import LLMOrchestrator
-
-__all__ = [
-    "ChannelProfile",
-    "VideoData", 
-    "LLMOrchestrator",
-]
-
-# Optional production components (require additional dependencies)
+# Import the main API app
 try:
-    from .infrastructure import MultiLLMOrchestrator, CacheManager
-    __all__.extend(["MultiLLMOrchestrator", "CacheManager"])
+    from .api import app
+    __all__ = ["app"]
 except ImportError:
-    pass
-
-try:
-    from .api import create_app
-    __all__.append("create_app")
-except ImportError:
-    pass
+    __all__ = []
