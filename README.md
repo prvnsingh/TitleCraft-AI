@@ -38,17 +38,6 @@ export OPENAI_API_KEY=your_api_key_here
 - **Interactive docs**: http://localhost:8000/docs  
 - **Health check**: http://localhost:8000/health
 
-## 🛠️ Minimalism Achievement
-
-| Before (Over-Engineered) | After (Minimal) |
-|--------------------------|-----------------|
-| 60+ files across 10+ directories | 7 essential files |
-| Complex infrastructure (Redis, monitoring) | Single-file implementation |
-| 55+ dependencies | 7 core dependencies |
-| Multiple service layers | Consolidated classes |
-| Production deployment configs | Development-ready server |
-
-**Engineering Decision**: Focus on requirements, not impressive complexity.
 
 ## 🏗️ Minimal Architecture
 
