@@ -17,7 +17,7 @@ from src.services.title_generator import (
 # Constants
 SERVICE_NAME = "TitleCraft AI"
 SERVICE_VERSION = "2.0.0"
-DEFAULT_MODEL = "DeepSeek-R1-Distill-Qwen-32B"
+DEFAULT_MODEL = "DeepSeek-R1-Distill-Qwen-32B" # for reasoning-heavy tasks
 
 
 # Request/Response Models
@@ -100,11 +100,6 @@ app = FastAPI(
 # Initialize the title generator with DeepSeek as default
 title_generator = TitleGenerator()
 
-
-@app.on_event("startup")
-async def startup_event():
-    """Log startup"""
-    print(f"🚀 {SERVICE_NAME} started successfully")
 
 
 @app.post("/generate", response_model=GenerationResponse)
