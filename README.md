@@ -242,13 +242,13 @@ curl -X POST "http://localhost:8000/generate-with-model?model=openai-gpt4" \
 
 
 
-## 🛠 Configuration│       ├── 🤖 enhanced_title_generator.py               # Main generator- **Plug-and-Play**: Switch between providers easily
+## 🛠 Configuration│       ├── 🤖 title_generator.py               # Main generator- **Plug-and-Play**: Switch between providers easily
 
 
 
-### Model Configuration│       ├── ⚙️ enhanced_llm_config.py                   # LLM configuration- **Streaming Support**: Real-time response generation
+### Model Configuration│       ├── ⚙️ llm_config.py                   # LLM configuration- **Streaming Support**: Real-time response generation
 
-Edit `src/services/enhanced_llm_config.py` to modify model settings or add new models.
+Edit `src/services/llm_config.py` to modify model settings or add new models.
 
 │       ├── 🔧 llm_service.py                           # LLM service- **Fallback Mechanisms**: Graceful degradation
 
@@ -549,7 +549,7 @@ python -m black src/ tests/ --line-length=88The training data includes 3 YouTube
 
 ### Add New Models
 
-1. Update `enhanced_llm_config.py` with model presets## 🧪 Implementation Details
+1. Update `llm_config.py` with model presets## 🧪 Implementation Details
 
 2. Add provider configuration in `llm_service.py`
 

@@ -1,5 +1,5 @@
 """
-Enhanced LLM Configuration Manager
+LLM Configuration Manager
 Environment-based model selection with comprehensive model configurations
 """
 

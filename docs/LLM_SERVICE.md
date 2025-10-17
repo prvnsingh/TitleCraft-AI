@@ -70,10 +70,10 @@ LangSmith provides powerful tracing and monitoring for your LLM calls:
 ### Basic Usage
 
 ```python
-from src.services.enhanced_title_generator import EnhancedTitleGenerator
+from src.services.title_generator import TitleGenerator
 
 # Initialize with default provider (OpenAI)
-generator = EnhancedTitleGenerator()
+generator = TitleGenerator()
 
 # Generate titles
 titles = generator.generate_titles("UC123", "How to learn Python programming")

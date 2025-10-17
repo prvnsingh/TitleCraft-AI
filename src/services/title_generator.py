@@ -1,5 +1,5 @@
 """
-Enhanced Title Generator
+Title Generator
 
 Orchestrates data loading, LLM service, prompt management, and performance tracking
 """
@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass
 
 from src.data_module.data_processor import DataLoader, GeneratedTitle
-from .enhanced_llm_config import config_manager
+from .llm_config import config_manager
 from .llm_service import create_system_message, create_human_message, LLMGenerationError
 from .prompt_manager import prompt_manager, create_title_generation_variables
 from .performance_tracker import performance_tracker
@@ -41,11 +41,11 @@ class TitleGenerationResponse:
     error_message: Optional[str] = None
 
 
-class EnhancedTitleGenerator:
-    """Enhanced title generator with LLM integration and performance tracking"""
+class TitleGenerator:
+    """Title generator with LLM integration and performance tracking"""
 
     def __init__(self, default_model: Optional[str] = None):
-        """Initialize the enhanced title generator"""
+        """Initialize the title generator"""
         self.data_loader = DataLoader()
         self.default_model = default_model or "DeepSeek-R1-Distill-Qwen-32B"
 
@@ -301,3 +301,7 @@ class EnhancedTitleGenerator:
     def get_available_models(self) -> Dict[str, Any]:
         """Get available models from config manager"""
         return config_manager.get_available_models()
+
+
+# For backward compatibility, maintain the old class name as an alias
+EnhancedTitleGenerator = TitleGenerator

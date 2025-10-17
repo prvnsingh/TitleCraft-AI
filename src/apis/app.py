@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import uvicorn
 
-from src.services.enhanced_title_generator import (
-    EnhancedTitleGenerator,
+from src.services.title_generator import (
+    TitleGenerator,
     TitleGenerationRequest,
     TitleGenerationResponse,
 )
@@ -98,7 +98,7 @@ app = FastAPI(
 )
 
 # Initialize the title generator with DeepSeek as default
-title_generator = EnhancedTitleGenerator()
+title_generator = TitleGenerator()
 
 
 @app.on_event("startup")
