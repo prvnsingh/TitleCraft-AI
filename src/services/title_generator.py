@@ -229,11 +229,17 @@ class TitleGenerator:
         # Convert to GeneratedTitle objects with enhanced reasoning
         enhanced_titles = []
         for i, score in enumerate(title_scores[:request.n_titles]):
-            # Preserve original reasoning and append performance metrics if reasoning exists
-            if score.reasoning and score.reasoning.strip():
-                enhanced_reasoning = f"{score.reasoning.strip()} | Performance: {score.predicted_performance}, Score: {score.overall_score:.2f}"
-            else:
+            # Preserve original reasoning and optionally append performance metrics
+            original_reasoning = score.reasoning.strip() if score.reasoning else ""
+            
+            # Only use fallback if no meaningful reasoning exists
+            if not original_reasoning or original_reasoning == "Generated based on channel patterns":
                 enhanced_reasoning = f"Generated based on channel patterns | Performance: {score.predicted_performance}, Score: {score.overall_score:.2f}"
+            else:
+                # Keep the original LLM reasoning as primary, add performance as supplementary info
+                enhanced_reasoning = original_reasoning
+                if len(original_reasoning) < 100:  # Only add metrics if reasoning is brief
+                    enhanced_reasoning += f" (Performance: {score.predicted_performance}, Score: {score.overall_score:.2f})"
             
             enhanced_title = GeneratedTitle(
                 title=score.title,
@@ -440,26 +446,126 @@ class TitleGenerator:
 
     def _parse_llm_response(self, response_text: str) -> List[GeneratedTitle]:
         """Parse LLM response into GeneratedTitle objects"""
+        # Debug: Log the original response
+        self.logger.info("Raw LLM response preview", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'action': 'response_debug',
+                'raw_response_preview': response_text[:500],
+                'response_length': len(response_text)
+            },
+            'request_id': self.current_request_id
+        })
+        
         # Clean the response text first
         cleaned_response = self._clean_response_text(response_text)
         
+        # Debug: Log the cleaned response
+        self.logger.info("Cleaned response preview", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'action': 'response_debug',
+                'cleaned_response_preview': cleaned_response[:500],
+                'cleaned_length': len(cleaned_response)
+            },
+            'request_id': self.current_request_id
+        })
+        
         try:
             return self._parse_structured_response(cleaned_response)
-        except Exception:
+        except Exception as e:
+            self.logger.warning("Structured parsing failed, using simple parse", extra={
+                'extra_fields': {
+                    'component': 'title_generator',
+                    'action': 'parse_fallback',
+                    'error': str(e)
+                },
+                'request_id': self.current_request_id
+            })
             return self._simple_parse_response(cleaned_response)
 
     def _clean_response_text(self, response_text: str) -> str:
-        """Clean response text by removing model internal reasoning"""
+        """Clean response text and extract reasoning from think blocks"""
         import re
         
-        # Remove <think>...</think> blocks (DeepSeek model internal reasoning)
+        # Extract reasoning from <think> blocks and convert to structured format
+        think_matches = re.findall(r'<think>(.*?)</think>', response_text, flags=re.DOTALL)
+        
+        # Remove <think> blocks from response
         response_text = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL)
+        
+        # Remove other internal reasoning blocks that shouldn't be preserved
         response_text = re.sub(r'<reasoning>.*?</reasoning>', '', response_text, flags=re.DOTALL)
         response_text = re.sub(r'<internal>.*?</internal>', '', response_text, flags=re.DOTALL)
+        
+        # If we have thinking content and the response doesn't follow expected format, restructure it
+        if think_matches and not re.search(r'REASONING\s*\d*:', response_text, re.IGNORECASE):
+            response_text = self._restructure_with_reasoning(response_text, think_matches[0])
         
         # Clean up extra whitespace
         response_text = re.sub(r'\n\s*\n', '\n\n', response_text)
         return response_text.strip()
+    
+    def _restructure_with_reasoning(self, response_text: str, thinking_content: str) -> str:
+        """Restructure response to include reasoning from thinking content"""
+        import re
+        
+        # Extract titles from the response
+        title_lines = []
+        lines = response_text.strip().split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            if line and not line.startswith('#') and not line.startswith('*') and len(line) > 10:
+                # Clean common title markers
+                clean_line = re.sub(r'^\d+\.\s*', '', line)
+                clean_line = re.sub(r'^-\s*', '', clean_line)
+                clean_line = re.sub(r'^•\s*', '', clean_line)
+                clean_line = clean_line.strip('"\'')
+                if clean_line:
+                    title_lines.append(clean_line)
+        
+        # Generate reasoning for each title from the thinking content
+        structured_response = []
+        reasoning_context = thinking_content.strip()
+        
+        for i, title in enumerate(title_lines[:4], 1):
+            structured_response.append(f"TITLE {i}: {title}")
+            # Extract relevant reasoning or use a portion of the thinking content
+            title_reasoning = self._extract_title_reasoning(reasoning_context, title, i)
+            structured_response.append(f"REASONING {i}: {title_reasoning}")
+            structured_response.append("")  # Empty line for separation
+        
+        return '\n'.join(structured_response)
+    
+    def _extract_title_reasoning(self, thinking_content: str, title: str, title_num: int) -> str:
+        """Extract or generate appropriate reasoning for a specific title"""
+        import re
+        
+        # Look for title-specific reasoning in the thinking content
+        title_words = title.lower().split()[:3]  # First few words to match
+        
+        sentences = re.split(r'[.!?]+', thinking_content)
+        relevant_sentences = []
+        
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if any(word in sentence.lower() for word in title_words):
+                relevant_sentences.append(sentence)
+        
+        if relevant_sentences:
+            reasoning = '. '.join(relevant_sentences[:2])  # Take first 2 relevant sentences
+            return reasoning.strip() + '.' if reasoning else f"This title effectively captures the video concept by focusing on the key elements that would appeal to the target audience."
+        
+        # Fallback reasoning based on common patterns
+        fallback_reasons = [
+            "This title uses engaging language and clear value proposition to attract viewers interested in the topic.",
+            "This title combines curiosity-driven phrasing with specific subject matter to maximize click-through potential.",
+            "This title leverages proven formatting patterns while maintaining relevance to the channel's content style.",
+            "This title balances educational value with entertainment appeal, matching the channel's successful video patterns."
+        ]
+        
+        return fallback_reasons[(title_num - 1) % len(fallback_reasons)]
 
     def _parse_structured_response(self, response_text: str) -> List[GeneratedTitle]:
         """Parse structured LLM response"""
@@ -474,17 +580,24 @@ class TitleGenerator:
                 continue
 
             if self._is_title_line(line):
+                # Save previous title-reasoning pair if exists
                 if current_title:
-                    titles.append(GeneratedTitle(title=current_title, reasoning=current_reasoning.strip()))
+                    reasoning = current_reasoning.strip() if current_reasoning.strip() else "Generated based on channel patterns and optimization analysis"
+                    titles.append(GeneratedTitle(title=current_title, reasoning=reasoning))
+                
                 current_title = self._extract_title_text(line)
                 current_reasoning = ""
             elif self._is_reasoning_line(line):
                 current_reasoning = self._extract_reasoning_text(line)
             elif current_title and self._is_continuation_line(line):
-                current_reasoning += " " + line
+                # Only add as continuation if it's not another title/reasoning marker
+                if not self._is_title_line(line) and not self._is_reasoning_line(line):
+                    current_reasoning += " " + line
 
+        # Don't forget the last title
         if current_title:
-            titles.append(GeneratedTitle(title=current_title, reasoning=current_reasoning.strip()))
+            reasoning = current_reasoning.strip() if current_reasoning.strip() else "Generated based on channel patterns and optimization analysis"
+            titles.append(GeneratedTitle(title=current_title, reasoning=reasoning))
 
         return titles
 
