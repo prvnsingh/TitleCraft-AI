@@ -318,18 +318,3 @@ OLLAMA_BASE_URL=http://localhost:11434
 - **🩺 Health Monitoring**: System status and service availability checks
 - **📈 Scalable Design**: Ready for horizontal scaling and deployment
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)  
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-**Built with FastAPI, LangChain, and modern Python practices for scalable AI title generation.**
