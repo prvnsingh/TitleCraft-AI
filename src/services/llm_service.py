@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from enum import Enum
 import time
 import os
-import logging
 import traceback
 
 from langchain_openai import ChatOpenAI
@@ -18,9 +17,7 @@ from langchain_community.llms import Ollama
 from langchain.schema import BaseMessage, HumanMessage, SystemMessage, AIMessage
 
 from .base_llm import BaseLLM, LLMResponse, LLMModelConfig, LLMProvider
-
-# Configure logging
-logger = logging.getLogger(__name__)
+from .structured_logger import structured_logger
 
 class LLMGenerationError(Exception):
     """Custom exception for LLM generation errors"""
@@ -54,6 +51,7 @@ class LLMService(BaseLLM):
             service_config: Service-level configuration
         """
         self.service_config = service_config or LLMServiceConfig()
+        self.logger = structured_logger
         super().__init__(config)
 
     def _initialize_llm(self):
@@ -99,15 +97,26 @@ class LLMService(BaseLLM):
         """Create HuggingFace LLM instance"""
         try:
             api_key = self._get_api_key("HUGGINGFACE")
-            logger.info(f"Creating HuggingFace LLM for model: {self.config.model_name}")
-            logger.debug(f"HuggingFace config: temperature={self.config.temperature}, max_new_tokens={self.config.max_tokens}")
+            self.logger.log_llm_operations({
+                "event": "llm_initialization",
+                "message": f"Creating HuggingFace LLM for model: {self.config.model_name}",
+                "model": self.config.model_name,
+                "provider": "huggingface",
+                "temperature": self.config.temperature,
+                "max_tokens": self.config.max_tokens
+            })
             
             # Check if this is a conversational model that needs ChatHuggingFace
             is_conversational = self._is_conversational_model()
             
             # Try different approaches based on model type
             if is_conversational:
-                logger.info(f"Creating conversational model interface for: {self.config.model_name}")
+                self.logger.log_llm_operations({
+                    "event": "llm_interface_creation",
+                    "message": f"Creating conversational model interface for: {self.config.model_name}",
+                    "model": self.config.model_name,
+                    "interface_type": "conversational"
+                })
                 
                 # For conversational models, we need to use the right task and let HF choose provider
                 hf_endpoint = HuggingFaceEndpoint(
@@ -120,10 +129,20 @@ class LLMService(BaseLLM):
                 )
                 
                 # Wrap with ChatHuggingFace for proper chat interface
-                logger.info(f"Successfully created conversational HuggingFace endpoint for {self.config.model_name}")
+                self.logger.log_llm_operations({
+                    "event": "llm_interface_success",
+                    "message": f"Successfully created conversational HuggingFace endpoint for {self.config.model_name}",
+                    "model": self.config.model_name,
+                    "interface_type": "conversational"
+                })
                 return ChatHuggingFace(llm=hf_endpoint)
             else:
-                logger.info(f"Creating text-generation model interface for: {self.config.model_name}")
+                self.logger.log_llm_operations({
+                    "event": "llm_interface_creation",
+                    "message": f"Creating text-generation model interface for: {self.config.model_name}",
+                    "model": self.config.model_name,
+                    "interface_type": "text-generation"
+                })
                 
                 # For text generation models, use standard approach
                 hf_endpoint = HuggingFaceEndpoint(
@@ -135,16 +154,31 @@ class LLMService(BaseLLM):
                     provider="auto",  # Let HuggingFace choose the best provider
                 )
                 
-                logger.info(f"Successfully created text-generation HuggingFace endpoint for {self.config.model_name}")
+                self.logger.log_llm_operations({
+                    "event": "llm_interface_success", 
+                    "message": f"Successfully created text-generation HuggingFace endpoint for {self.config.model_name}",
+                    "model": self.config.model_name,
+                    "interface_type": "text-generation"
+                })
                 return hf_endpoint
             
         except Exception as e:
-            logger.error(f"Failed to create HuggingFace LLM: {str(e)}")
-            logger.error(f"Full traceback: {traceback.format_exc()}")
+            self.logger.log_llm_operations({
+                "event": "llm_creation_error",
+                "message": f"Failed to create HuggingFace LLM: {str(e)}",
+                "model": self.config.model_name,
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }, level="ERROR")
             
             # If model fails due to task/provider mismatch, try alternative configurations
             if "not supported for task" in str(e) and "conversational" in str(e):
-                logger.warning(f"Model {self.config.model_name} requires conversational task, retrying with ChatHuggingFace...")
+                self.logger.log_llm_operations({
+                    "event": "llm_retry_attempt",
+                    "message": f"Model {self.config.model_name} requires conversational task, retrying with ChatHuggingFace...",
+                    "model": self.config.model_name,
+                    "retry_strategy": "conversational_task"
+                }, level="WARNING")
                 try:
                     api_key = self._get_api_key("HUGGINGFACE")
                     hf_endpoint = HuggingFaceEndpoint(
@@ -157,13 +191,24 @@ class LLMService(BaseLLM):
                     )
                     return ChatHuggingFace(llm=hf_endpoint)
                 except Exception as retry_e:
-                    logger.error(f"Retry with conversational task also failed: {str(retry_e)}")
+                    self.logger.log_llm_operations({
+                        "event": "llm_retry_failed",
+                        "message": f"Retry with conversational task also failed: {str(retry_e)}",
+                        "model": self.config.model_name,
+                        "retry_error": str(retry_e)
+                    }, level="ERROR")
             
             # Suggest working alternatives
-            logger.warning(f"Model {self.config.model_name} failed to initialize. Consider these alternatives:")
-            logger.warning("- google/flan-t5-large (text-generation)")
-            logger.warning("- microsoft/DialoGPT-medium (conversational)") 
-            logger.warning("- gpt2 (text-generation)")
+            self.logger.log_llm_operations({
+                "event": "llm_alternatives_suggested",
+                "message": f"Model {self.config.model_name} failed to initialize. Consider these alternatives",
+                "model": self.config.model_name,
+                "alternatives": [
+                    "google/flan-t5-large (text-generation)",
+                    "microsoft/DialoGPT-medium (conversational)",
+                    "gpt2 (text-generation)"
+                ]
+            }, level="WARNING")
             
             raise LLMGenerationError(
                 f"Failed to initialize HuggingFace model {self.config.model_name}. "
@@ -277,23 +322,23 @@ class LLMService(BaseLLM):
         start_time = time.time()
 
         try:
-            logger.info(f"Starting generation with model: {self.config.model_name} (provider: {self.config.provider.value})")
-            logger.debug(f"Input messages: {len(messages)} messages")
-            logger.debug(f"Generation kwargs: {kwargs}")
+            self.logger.log_llm_request(
+                model=self.config.model_name,
+                parameters={
+                    "provider": self.config.provider.value,
+                    "messages_count": len(messages),
+                    "generation_kwargs": kwargs
+                }
+            )
             
             # Filter and map generation parameters
             generation_kwargs = self._filter_generation_kwargs(kwargs)
-            logger.debug(f"Filtered generation kwargs: {generation_kwargs}")
 
             # Generate response
-            logger.debug("Calling LLM invoke method...")
             if generation_kwargs:
                 response = self.llm.invoke(messages, **generation_kwargs)
             else:
                 response = self.llm.invoke(messages)
-            
-            logger.debug(f"LLM response type: {type(response)}")
-            logger.debug(f"LLM response: {str(response)[:200]}...")
 
             # Extract content based on response type
             if hasattr(response, "content"):
@@ -306,6 +351,15 @@ class LLMService(BaseLLM):
 
             # Estimate tokens (rough approximation)
             estimated_tokens = self._estimate_tokens(content)
+
+            # Log successful response
+            self.logger.log_llm_response(
+                response_text=content[:500] + "..." if len(content) > 500 else content,
+                tokens_used=estimated_tokens,
+                model=self.config.model_name,
+                response_time=response_time,
+                cost=self._estimate_cost(estimated_tokens)
+            )
 
             return LLMResponse(
                 content=content,
@@ -323,12 +377,17 @@ class LLMService(BaseLLM):
 
         except Exception as e:
             response_time = time.time() - start_time
-            logger.error(f"Generation failed for {self.config.model_name}")
-            logger.error(f"Error type: {type(e).__name__}")
-            logger.error(f"Error message: {str(e)}")
-            logger.error(f"Full traceback: {traceback.format_exc()}")
-            logger.error(f"Generation kwargs used: {generation_kwargs if 'generation_kwargs' in locals() else 'Not set'}")
-            logger.error(f"Messages passed: {messages}")
+            self.logger.log_llm_operations({
+                "event": "llm_generation_error",
+                "message": f"Generation failed for {self.config.model_name}",
+                "model": self.config.model_name,
+                "error_type": type(e).__name__,
+                "error_message": str(e),
+                "response_time": response_time,
+                "generation_kwargs": generation_kwargs if 'generation_kwargs' in locals() else 'Not set',
+                "messages_count": len(messages),
+                "traceback": traceback.format_exc()
+            }, level="ERROR")
             
             raise LLMGenerationError(
                 f"Generation failed for {self.config.model_name}: {str(e)}"
@@ -346,15 +405,19 @@ class LLMService(BaseLLM):
             Streaming response chunks
         """
         try:
-            logger.info(f"Starting streaming generation with model: {self.config.model_name}")
-            logger.debug(f"Streaming kwargs: {kwargs}")
+            self.logger.log_llm_request(
+                model=self.config.model_name,
+                parameters={
+                    "provider": self.config.provider.value,
+                    "streaming": True,
+                    "generation_kwargs": kwargs
+                }
+            )
             
             # Filter and map generation parameters
             generation_kwargs = self._filter_generation_kwargs(kwargs)
-            logger.debug(f"Filtered streaming kwargs: {generation_kwargs}")
 
             # Generate streaming response
-            logger.debug("Starting streaming response...")
             if generation_kwargs:
                 for chunk in self.llm.stream(messages, **generation_kwargs):
                     yield chunk
@@ -363,10 +426,14 @@ class LLMService(BaseLLM):
                     yield chunk
 
         except Exception as e:
-            logger.error(f"Streaming generation failed for {self.config.model_name}")
-            logger.error(f"Error type: {type(e).__name__}")
-            logger.error(f"Error message: {str(e)}")
-            logger.error(f"Full traceback: {traceback.format_exc()}")
+            self.logger.log_llm_operations({
+                "event": "llm_streaming_error",
+                "message": f"Streaming generation failed for {self.config.model_name}",
+                "model": self.config.model_name,
+                "error_type": type(e).__name__,
+                "error_message": str(e),
+                "traceback": traceback.format_exc()
+            }, level="ERROR")
             
             raise LLMGenerationError(
                 f"Streaming generation failed for {self.config.model_name}: {str(e)}"

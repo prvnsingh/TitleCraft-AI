@@ -16,13 +16,7 @@ from .performance_tracker import performance_tracker
 from .pattern_discovery import PatternDiscoveryAgent
 from .context_aware_prompts import ContextAwarePromptSelector
 from .title_quality_evaluator import TitleQualityEvaluator
-from .logger_config import (
-    titlecraft_logger, 
-    log_execution_flow, 
-    log_data_analysis, 
-    log_context_aware_decision,
-    log_llm_interaction
-)
+from .structured_logger import structured_logger, log_llm_operation
 
 @dataclass
 class TitleGenerationRequest:
@@ -56,7 +50,7 @@ class TitleGenerator:
 
     def __init__(self, default_model: Optional[str] = None):
         """Initialize the intelligent title generator"""
-        self.logger = titlecraft_logger.get_logger("title_generator")
+        self.logger = structured_logger
         self.data_loader = DataLoader()
         self.default_model = default_model or "DeepSeek-R1-Distill-Qwen-32B"
         self.current_request_id = None  # Track current request for logging context
@@ -66,15 +60,13 @@ class TitleGenerator:
         self.prompt_selector = ContextAwarePromptSelector()
         self.quality_evaluator = TitleQualityEvaluator()
         
-        self.logger.info("TitleGenerator initialized", extra={
-            'extra_fields': {
-                'component': 'title_generator',
-                'default_model': self.default_model,
-                'action': 'initialization'
-            }
+        self.logger.log_llm_operations({
+            "event": "title_generator_initialized",
+            "default_model": self.default_model,
+            "components": ["pattern_agent", "prompt_selector", "quality_evaluator"]
         })
 
-    @log_execution_flow("title_generation", "title_generator")
+    @log_llm_operation("title_generation", "DeepSeek-R1-Distill-Qwen-32B")
     def generate_titles(self, request: TitleGenerationRequest) -> TitleGenerationResponse:
         """Generate titles for a video idea based on channel patterns"""
         start_time = time.time()
@@ -186,37 +178,26 @@ class TitleGenerator:
         messages = self._prepare_messages(request)
         generation_kwargs = self._prepare_intelligent_generation_kwargs(request, contextual_prompt)
         
-        # Log LLM interaction details
-        log_llm_interaction(
-            model_name=model_name,
-            prompt_type=contextual_prompt.strategy.value,
-            component="title_generator"
+        # Log LLM request details
+        self.logger.log_llm_request(
+            model=model_name,
+            parameters=generation_kwargs,
+            request_id=self.current_request_id,
+            channel_id=request.channel_id
         )
-        
-        self.logger.info("Sending request to LLM", extra={
-            'extra_fields': {
-                'component': 'title_generator',
-                'action': 'llm_request',
-                'generation_kwargs': generation_kwargs
-            },
-            'request_id': self.current_request_id,
-            'channel_id': request.channel_id
-        })
         
         # Generate and parse response
         llm_response = llm_service.generate(messages, **generation_kwargs)
         
-        self.logger.info("LLM response received", extra={
-            'extra_fields': {
-                'component': 'title_generator',
-                'action': 'llm_response',
-                'response_length': len(llm_response.content),
-                'tokens_used': llm_response.tokens_used,
-                'cost': llm_response.cost
-            },
-            'request_id': self.current_request_id,
-            'channel_id': request.channel_id
-        })
+        # Log LLM response
+        self.logger.log_llm_response(
+            response_text=llm_response.content,
+            tokens_used=llm_response.tokens_used,
+            cost=llm_response.cost,
+            response_time=time.time() - start_time,
+            request_id=self.current_request_id,
+            channel_id=request.channel_id
+        )
         
         generated_titles = self._parse_llm_response(llm_response.content)
         
@@ -248,9 +229,15 @@ class TitleGenerator:
         # Convert to GeneratedTitle objects with enhanced reasoning
         enhanced_titles = []
         for i, score in enumerate(title_scores[:request.n_titles]):
+            # Preserve original reasoning and append performance metrics if reasoning exists
+            if score.reasoning and score.reasoning.strip():
+                enhanced_reasoning = f"{score.reasoning.strip()} | Performance: {score.predicted_performance}, Score: {score.overall_score:.2f}"
+            else:
+                enhanced_reasoning = f"Generated based on channel patterns | Performance: {score.predicted_performance}, Score: {score.overall_score:.2f}"
+            
             enhanced_title = GeneratedTitle(
                 title=score.title,
-                reasoning=f"{score.reasoning} [Performance: {score.predicted_performance}, Score: {score.overall_score:.2f}, Confidence: {score.confidence_score:.1%}]",
+                reasoning=enhanced_reasoning,
                 confidence_score=score.confidence_score,
                 model_used=model_name
             )
@@ -285,7 +272,7 @@ class TitleGenerator:
                 "channel_type": intelligent_patterns.channel_type,
                 "content_style": intelligent_patterns.content_style,
                 "pattern_confidence": intelligent_patterns.confidence_score,
-                "avg_title_score": sum(s.overall_score for s in title_scores[:request.n_titles]) / min(len(title_scores), request.n_titles)
+                "avg_title_score": sum(s.overall_score for s in title_scores[:request.n_titles]) / min(len(title_scores), request.n_titles) if min(len(title_scores), request.n_titles) > 0 else 0.0
             }
         )
         
@@ -351,6 +338,31 @@ class TitleGenerator:
             channel_analysis=channel_analysis,
             video_idea=request.video_idea,
             n_titles=request.n_titles
+        )
+        
+        # Log prompt construction with injected data
+        self.logger.log_prompt_construction(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            data_injected={
+                "channel_analysis": {
+                    "channel_type": intelligent_patterns.channel_type,
+                    "content_style": intelligent_patterns.content_style,
+                    "confidence_score": intelligent_patterns.confidence_score,
+                    "video_count": len(channel_videos),
+                    "avg_views": intelligent_patterns.avg_views,
+                    "pattern_weights": {
+                        "word_count": intelligent_patterns.pattern_weights.word_count_weight,
+                        "question": intelligent_patterns.pattern_weights.question_weight,
+                        "numeric": intelligent_patterns.pattern_weights.numeric_weight
+                    }
+                },
+                "video_idea": request.video_idea,
+                "n_titles": request.n_titles
+            },
+            optimization_strategy=contextual_prompt.strategy.value,
+            request_id=self.current_request_id,
+            channel_id=request.channel_id
         )
         
         return [
@@ -482,20 +494,36 @@ class TitleGenerator:
 
     def _is_title_line(self, line: str) -> bool:
         """Check if line contains a title"""
-        return line.startswith("TITLE") or line.startswith("**TITLE")
+        return (line.startswith("TITLE") or 
+                line.startswith("**TITLE") or 
+                line.startswith("### Title") or
+                line.startswith("Title ") or
+                line.startswith("**Title") or
+                "TITLE" in line.upper() and ":" in line)
 
     def _is_reasoning_line(self, line: str) -> bool:
         """Check if line contains reasoning"""
-        return line.startswith("REASONING") or line.startswith("**REASONING")
-
+        return (line.startswith("REASONING") or 
+                line.startswith("**REASONING") or 
+                line.startswith("**Reasoning:") or
+                line.startswith("Reasoning:") or
+                "REASONING" in line.upper() and ":" in line)
+    
     def _extract_title_text(self, line: str) -> str:
         """Extract title text from line"""
-        title_part = line.split(":", 1)
-        if len(title_part) > 1:
-            title_text = title_part[1].strip()
-            title_text = title_text.strip('"').strip("'")
-            title_text = title_text.replace("**", "").strip()
-            return title_text
+        # Handle different title formats
+        if ":" in line:
+            title_part = line.split(":", 1)
+            if len(title_part) > 1:
+                title_text = title_part[1].strip()
+                # Clean up markdown formatting and quotes
+                title_text = title_text.strip('"').strip("'")
+                title_text = title_text.replace("**", "").strip()
+                title_text = title_text.replace("*", "").strip()
+                # Remove surrounding quotes if they exist
+                if title_text.startswith('"') and title_text.endswith('"'):
+                    title_text = title_text[1:-1]
+                return title_text
         return ""
 
     def _extract_reasoning_text(self, line: str) -> str:

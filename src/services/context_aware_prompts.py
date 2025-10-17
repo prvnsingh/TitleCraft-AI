@@ -8,12 +8,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from .pattern_discovery import IntelligentPatterns
-from .logger_config import (
-    titlecraft_logger, 
-    log_execution_flow, 
-    log_data_analysis, 
-    log_context_aware_decision
-)
+from .structured_logger import structured_logger, log_llm_operation
 
 
 class PromptStrategy(Enum):
@@ -49,40 +44,33 @@ class ContextAwarePromptSelector:
     """
     
     def __init__(self):
-        self.logger = titlecraft_logger.get_logger("context_aware_prompts")
+        self.logger = structured_logger
         self.prompt_strategies = self._initialize_strategies()
         
-        self.logger.info("ContextAwarePromptSelector initialized", extra={
-            'extra_fields': {
-                'component': 'context_aware_prompts',
-                'action': 'initialization',
-                'strategies_count': len(self.prompt_strategies)
-            }
+        self.logger.log_llm_operations({
+            "event": "context_aware_prompt_selector_initialized",
+            "strategies_count": len(self.prompt_strategies),
+            "component": "context_aware_prompts"
         })
     
-    @log_execution_flow("context_selection", "context_aware_prompts")
+    @log_llm_operation("context_selection")
     def select_optimal_context(self, patterns: IntelligentPatterns) -> ContextualPrompt:
         """
         Select the optimal prompt strategy and parameters based on patterns
         """
-        self.logger.info("Starting optimal context selection", extra={
-            'extra_fields': {
-                'component': 'context_aware_prompts',
-                'action': 'context_selection_start',
-                'channel_type': patterns.channel_type,
-                'content_style': patterns.content_style,
-                'confidence_score': patterns.confidence_score,
-                'avg_word_count': patterns.avg_word_count
-            }
-        })
+        # This will be logged by the decorator
         
         strategy = self._determine_strategy(patterns)
         
-        log_context_aware_decision(
-            decision_type="prompt_strategy_selection",
-            reasoning=f"Selected {strategy.value} based on channel_type={patterns.channel_type}, content_style={patterns.content_style}",
-            confidence=patterns.confidence_score,
-            component="context_aware_prompts"
+        self.logger.log_prompt_optimization(
+            original_strategy="default",
+            optimized_strategy=strategy.value,
+            optimization_reasons={
+                "channel_type": patterns.channel_type,
+                "content_style": patterns.content_style,
+                "confidence_score": patterns.confidence_score,
+                "decision_logic": f"Selected {strategy.value} based on channel analysis"
+            }
         )
         
         base_prompt = self._get_strategy_prompt(strategy)
@@ -90,36 +78,13 @@ class ContextAwarePromptSelector:
         # Adapt parameters based on patterns
         parameters = self._adapt_parameters(patterns, strategy)
         
-        self.logger.info("Parameters adapted for context", extra={
-            'extra_fields': {
-                'component': 'context_aware_prompts',
-                'action': 'parameter_adaptation',
-                'strategy': strategy.value,
-                'temperature': parameters.temperature,
-                'max_tokens': parameters.max_tokens,
-                'top_p': parameters.top_p,
-                'presence_penalty': parameters.presence_penalty
-            }
-        })
+        # Parameters adapted - logged by decorator
         
         # Customize prompt content based on patterns
         system_prompt = self._customize_system_prompt(base_prompt.system_prompt, patterns)
         user_prompt = self._customize_user_prompt(base_prompt.user_prompt_template, patterns)
         
-        self.logger.info("Prompts customized based on patterns", extra={
-            'extra_fields': {
-                'component': 'context_aware_prompts',
-                'action': 'prompt_customization',
-                'system_prompt_length': len(system_prompt),
-                'user_prompt_length': len(user_prompt),
-                'top_keywords': patterns.top_keywords[:3] if hasattr(patterns, 'top_keywords') else [],
-                'pattern_weights': {
-                    'word_count': getattr(patterns.pattern_weights, 'word_count_weight', None) if hasattr(patterns, 'pattern_weights') else None,
-                    'question': getattr(patterns.pattern_weights, 'question_weight', None) if hasattr(patterns, 'pattern_weights') else None,
-                    'numeric': getattr(patterns.pattern_weights, 'numeric_weight', None) if hasattr(patterns, 'pattern_weights') else None
-                }
-            }
-        })
+        # Prompt customization details will be logged via the structured logger
         
         contextual_prompt = ContextualPrompt(
             system_prompt=system_prompt,
@@ -128,15 +93,7 @@ class ContextAwarePromptSelector:
             strategy=strategy
         )
         
-        self.logger.info("Context selection completed", extra={
-            'extra_fields': {
-                'component': 'context_aware_prompts',
-                'action': 'context_selection_complete',
-                'final_strategy': strategy.value,
-                'final_temperature': parameters.temperature,
-                'final_max_tokens': parameters.max_tokens
-            }
-        })
+        # Context selection completed - logged by decorator
         
         return contextual_prompt
     
@@ -296,7 +253,14 @@ Generate titles that emphasize learning value, practical benefits, and expertise
 - Use proven educational title patterns from this channel
 - Appeal to viewers seeking knowledge and skills
 
-Format each title with reasoning based on educational content patterns.""",
+REQUIRED FORMAT - You must format each title exactly like this:
+TITLE 1: [Your title here]
+REASONING 1: [Your reasoning here]
+
+TITLE 2: [Your title here]
+REASONING 2: [Your reasoning here]
+
+Continue this pattern for all {n_titles} titles. Do NOT use <think> tags or any other format.""",
             
             parameters=AdaptiveParameters(
                 temperature=0.6,  # Moderate creativity for educational content
@@ -318,12 +282,19 @@ Format each title with reasoning based on educational content patterns.""",
 
 NEW VIDEO IDEA: "{video_idea}"
 
-Generate titles that maximize entertainment value and shareability. Each title should:
-- Create strong curiosity gaps or emotional hooks
+Generate titles with maximum emotional engagement and viral potential. Each title should:
+- Create strong curiosity gaps and emotional hooks
 - Use proven entertainment patterns from this channel
-- Appeal to viewers seeking fun, surprise, or emotional content
+- Be highly shareable and click-worthy
 
-Format each title with reasoning based on entertainment content patterns.""",
+REQUIRED FORMAT - You must format each title exactly like this:
+TITLE 1: [Your title here]
+REASONING 1: [Your reasoning here]
+
+TITLE 2: [Your title here]
+REASONING 2: [Your reasoning here]
+
+Continue this pattern for all {n_titles} titles. Do NOT use <think> tags or any other format.""",
             
             parameters=AdaptiveParameters(
                 temperature=0.8,  # Higher creativity for entertainment
@@ -350,7 +321,14 @@ Generate titles that appeal to this channel's diverse audience. Each title shoul
 - Use the most effective patterns discovered for this channel
 - Appeal to multiple viewer motivations
 
-Format each title with reasoning based on mixed content patterns.""",
+REQUIRED FORMAT - You must format each title exactly like this:
+TITLE 1: [Your title here]
+REASONING 1: [Your reasoning here]
+
+TITLE 2: [Your title here]  
+REASONING 2: [Your reasoning here]
+
+Continue this pattern for all {n_titles} titles. Do NOT use <think> tags or any other format.""",
             
             parameters=AdaptiveParameters(
                 temperature=0.7,  # Balanced creativity
@@ -377,7 +355,14 @@ Generate titles using both channel insights and proven YouTube strategies. Each 
 - Incorporate any reliable patterns from available data
 - Focus on broad audience appeal
 
-Format each title with reasoning based on available data and general best practices.""",
+REQUIRED FORMAT - You must format each title exactly like this:
+TITLE 1: [Your title here]
+REASONING 1: [Your reasoning here]
+
+TITLE 2: [Your title here]
+REASONING 2: [Your reasoning here]
+
+Continue this pattern for all {n_titles} titles. Do NOT use <think> tags or any other format.""",
             
             parameters=AdaptiveParameters(
                 temperature=0.7,  # Moderate creativity with broader exploration
@@ -398,8 +383,16 @@ Format each title with reasoning based on available data and general best practi
 
 VIDEO IDEA: "{video_idea}"
 
-Create titles that are engaging, clear, and likely to perform well on YouTube. 
-Format each title with brief reasoning.""",
+Create titles that are engaging, clear, and likely to perform well on YouTube.
+
+REQUIRED FORMAT - You must format each title exactly like this:
+TITLE 1: [Your title here]
+REASONING 1: [Your reasoning here]
+
+TITLE 2: [Your title here]
+REASONING 2: [Your reasoning here]
+
+Continue this pattern for all {n_titles} titles. Do NOT use <think> tags or any other format.""",
             
             parameters=AdaptiveParameters(
                 temperature=0.7,

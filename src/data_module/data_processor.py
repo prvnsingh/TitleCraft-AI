@@ -3,7 +3,7 @@ import pandas as pd
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 
-from ..services.logger_config import titlecraft_logger, log_execution_flow, log_data_analysis
+from ..services.structured_logger import structured_logger, log_data_operation
 
 
 # Data Models
@@ -57,80 +57,63 @@ class DataLoader:
     def __init__(
         self, csv_path: str = "electrify__applied_ai_engineer__training_data.csv"
     ):
-        self.logger = titlecraft_logger.get_logger("data_processor")
+        self.logger = structured_logger
         self.csv_path = csv_path
         self.data: Optional[pd.DataFrame] = None
         self.load_data()
 
-    @log_execution_flow("data_loading", "data_processor")
+    @log_data_operation("data_loading", "data_processor")
     def load_data(self) -> None:
         """Load data from CSV file"""
-        self.logger.info("Starting data loading", extra={
-            'extra_fields': {
-                'component': 'data_processor',
-                'action': 'data_loading_start',
-                'csv_path': self.csv_path
-            }
-        })
-        
         if not os.path.exists(self.csv_path):
-            self.logger.error("CSV file not found", extra={
-                'extra_fields': {
-                    'component': 'data_processor',
-                    'action': 'file_not_found',
-                    'csv_path': self.csv_path
-                }
-            })
-            raise FileNotFoundError(f"CSV file not found: {self.csv_path}")
+            error_msg = f"CSV file not found: {self.csv_path}"
+            self.logger.log_data_analytics({
+                "event": "file_not_found_error",
+                "csv_path": self.csv_path,
+                "error": error_msg
+            }, level="ERROR")
+            raise FileNotFoundError(error_msg)
 
         self.data = pd.read_csv(self.csv_path)
         
         videos_count = len(self.data)
         channels_count = len(self.data['channel_id'].unique())
+        data_shape = list(self.data.shape)
         
-        self.logger.info("Data loaded successfully", extra={
-            'extra_fields': {
-                'component': 'data_processor',
-                'action': 'data_loaded',
-                'videos_count': videos_count,
-                'channels_count': channels_count,
-                'data_shape': list(self.data.shape)
-            }
-        })
+        # Log data loading insights
+        self.logger.log_data_insights({
+            "videos_count": videos_count,
+            "channels_count": channels_count,
+            "data_shape": data_shape,
+            "columns": list(self.data.columns),
+            "memory_usage_mb": self.data.memory_usage(deep=True).sum() / 1024 / 1024
+        }, "csv_file")
         
         print(f"Loaded {videos_count} videos from {channels_count} channels")
 
-    @log_execution_flow("channel_data_retrieval", "data_processor")
+    @log_data_operation("channel_data_retrieval", "data_processor")
     def get_channel_data(self, channel_id: str) -> List[VideoData]:
         """Get all videos for a specific channel"""
-        self.logger.info("Retrieving channel data", extra={
-            'extra_fields': {
-                'component': 'data_processor',
-                'action': 'channel_data_retrieval',
-            },
-            'channel_id': channel_id
-        })
-        
         if self.data is None:
-            self.logger.warning("No data loaded", extra={
-                'extra_fields': {
-                    'component': 'data_processor',
-                    'action': 'no_data_available'
-                },
-                'channel_id': channel_id
-            })
+            self.logger.log_data_analytics({
+                "event": "no_data_available_error",
+                "operation": "channel_data_retrieval"
+            }, level="WARNING", channel_id=channel_id)
             return []
 
         channel_videos = self.data[self.data["channel_id"] == channel_id]
+        videos_found = len(channel_videos)
         
-        self.logger.info("Channel data retrieved", extra={
-            'extra_fields': {
-                'component': 'data_processor',
-                'action': 'channel_data_retrieved',
-                'videos_found': len(channel_videos)
-            },
-            'channel_id': channel_id
-        })
+        # Log channel data insights
+        self.logger.log_data_insights({
+            "videos_found": videos_found,
+            "channel_analysis": {
+                "avg_views": channel_videos["views_in_period"].mean() if videos_found > 0 else 0,
+                "max_views": channel_videos["views_in_period"].max() if videos_found > 0 else 0,
+                "min_views": channel_videos["views_in_period"].min() if videos_found > 0 else 0,
+                "total_views": channel_videos["views_in_period"].sum() if videos_found > 0 else 0
+            }
+        }, "channel_data", channel_id=channel_id)
 
         video_data_list = [
             VideoData(

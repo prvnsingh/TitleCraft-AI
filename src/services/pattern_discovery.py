@@ -10,11 +10,7 @@ from collections import Counter
 import numpy as np
 
 from src.data_module.data_processor import VideoData
-from .logger_config import (
-    titlecraft_logger, 
-    log_execution_flow, 
-    log_data_analysis
-)
+from .structured_logger import structured_logger, log_data_operation
 
 
 @dataclass
@@ -31,13 +27,24 @@ class PatternWeights:
         """Normalize weights to sum to 1.0"""
         total = (self.word_count_weight + self.question_weight + self.numeric_weight + 
                 self.exclamation_weight + self.capitalization_weight + self.keyword_weight)
-        if total > 0:
+        
+        # Check for zero, NaN, or negative total
+        if total > 0 and not np.isnan(total):
             self.word_count_weight /= total
             self.question_weight /= total
             self.numeric_weight /= total
             self.exclamation_weight /= total
             self.capitalization_weight /= total
             self.keyword_weight /= total
+        else:
+            # Use equal weights if total is zero, NaN, or negative
+            equal_weight = 1.0 / 6.0
+            self.word_count_weight = equal_weight
+            self.question_weight = equal_weight
+            self.numeric_weight = equal_weight
+            self.exclamation_weight = equal_weight
+            self.capitalization_weight = equal_weight
+            self.keyword_weight = equal_weight
 
 
 @dataclass
@@ -61,18 +68,16 @@ class PatternDiscoveryAgent:
     """
     
     def __init__(self):
-        self.logger = titlecraft_logger.get_logger("pattern_discovery")
+        self.logger = structured_logger
         self.performance_threshold_percentile = 70  # Top 30% are considered high-performing
         
-        self.logger.info("PatternDiscoveryAgent initialized", extra={
-            'extra_fields': {
-                'component': 'pattern_discovery',
-                'action': 'initialization',
-                'performance_threshold': self.performance_threshold_percentile
-            }
+        self.logger.log_data_analytics({
+            "event": "pattern_discovery_agent_initialized",
+            "performance_threshold": self.performance_threshold_percentile,
+            "component": "pattern_discovery"
         })
     
-    @log_data_analysis("pattern_discovery", "pattern_discovery")
+    @log_data_operation("pattern_discovery", "pattern_discovery")
     def discover_patterns(self, videos: List[VideoData]) -> IntelligentPatterns:
         """
         Intelligently discover patterns with adaptive weighting
@@ -248,19 +253,35 @@ class PatternDiscoveryAgent:
         
         # Word count correlation
         word_counts = [len(v.title.split()) for v in all_videos]
-        word_count_corr = abs(np.corrcoef(word_counts, views)[0, 1]) if len(set(word_counts)) > 1 else 0.1
+        try:
+            word_count_corr = abs(np.corrcoef(word_counts, views)[0, 1]) if len(set(word_counts)) > 1 else 0.1
+            word_count_corr = 0.1 if np.isnan(word_count_corr) else word_count_corr
+        except (ValueError, IndexError):
+            word_count_corr = 0.1
         
         # Question mark correlation
         question_flags = [1 if '?' in v.title else 0 for v in all_videos]
-        question_corr = abs(np.corrcoef(question_flags, views)[0, 1]) if len(set(question_flags)) > 1 else 0.1
+        try:
+            question_corr = abs(np.corrcoef(question_flags, views)[0, 1]) if len(set(question_flags)) > 1 else 0.1
+            question_corr = 0.1 if np.isnan(question_corr) else question_corr
+        except (ValueError, IndexError):
+            question_corr = 0.1
         
         # Numeric correlation
         numeric_flags = [1 if re.search(r'\d+', v.title) else 0 for v in all_videos]
-        numeric_corr = abs(np.corrcoef(numeric_flags, views)[0, 1]) if len(set(numeric_flags)) > 1 else 0.1
+        try:
+            numeric_corr = abs(np.corrcoef(numeric_flags, views)[0, 1]) if len(set(numeric_flags)) > 1 else 0.1
+            numeric_corr = 0.1 if np.isnan(numeric_corr) else numeric_corr
+        except (ValueError, IndexError):
+            numeric_corr = 0.1
         
         # Exclamation correlation
         exclamation_flags = [1 if '!' in v.title else 0 for v in all_videos]
-        exclamation_corr = abs(np.corrcoef(exclamation_flags, views)[0, 1]) if len(set(exclamation_flags)) > 1 else 0.1
+        try:
+            exclamation_corr = abs(np.corrcoef(exclamation_flags, views)[0, 1]) if len(set(exclamation_flags)) > 1 else 0.1
+            exclamation_corr = 0.1 if np.isnan(exclamation_corr) else exclamation_corr
+        except (ValueError, IndexError):
+            exclamation_corr = 0.1
         
         # Capitalization correlation
         cap_scores = []
@@ -270,7 +291,11 @@ class PatternDiscoveryAgent:
                 cap_scores.append(sum(1 for word in words if word[0].isupper()) / len(words))
             else:
                 cap_scores.append(0)
-        cap_corr = abs(np.corrcoef(cap_scores, views)[0, 1]) if len(set(cap_scores)) > 1 else 0.1
+        try:
+            cap_corr = abs(np.corrcoef(cap_scores, views)[0, 1]) if len(set(cap_scores)) > 1 else 0.1
+            cap_corr = 0.1 if np.isnan(cap_corr) else cap_corr
+        except (ValueError, IndexError):
+            cap_corr = 0.1
         
         # Default keyword weight
         keyword_weight = 0.2

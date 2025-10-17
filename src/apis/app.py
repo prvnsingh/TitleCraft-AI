@@ -19,7 +19,7 @@ from src.apis.models import (
     ModelInfo,
     AvailableModelsResponse,
 )
-from src.services.logger_config import titlecraft_logger, log_execution_flow
+from ..services.structured_logger import structured_logger, log_api_operation
 
 # Constants
 SERVICE_NAME = "TitleCraft AI"
@@ -35,7 +35,7 @@ app = FastAPI(
 )
 
 # Initialize logging for API
-api_logger = titlecraft_logger.get_logger("api")
+api_logger = structured_logger
 
 # Initialize the title generator with DeepSeek as default
 title_generator = TitleGenerator()
@@ -53,7 +53,7 @@ api_logger.info("FastAPI application initialized", extra={
 
 
 @app.post("/generate", response_model=GenerationResponse)
-@log_execution_flow("api_generate_default", "api")
+@log_api_operation("/generate")
 async def generate_titles_default(request: TitleRequest) -> GenerationResponse:
     """
     Generate optimized YouTube titles using the default DeepSeek model.

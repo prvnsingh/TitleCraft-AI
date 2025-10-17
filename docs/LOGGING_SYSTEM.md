@@ -1,109 +1,99 @@
-# TitleCraft AI - Comprehensive Logging System
+# TitleCraft AI - Structured Logging System
 
 ## 📋 Overview
 
-The TitleCraft AI application now includes a comprehensive, structured logging system designed to provide complete visibility into the application's execution flow, data analysis reasoning, and performance metrics. This logging system is specifically designed to support presentations and demonstrations by providing clear insights into how the AI system makes decisions.
+TitleCraft AI uses a comprehensive structured logging system built around three specialized JSONL log files. This system provides complete visibility into data analytics, LLM operations, and API performance, making it ideal for analysis, debugging, and presentations.
 
 ## 🎯 Key Features
 
-### ✅ **Structured JSON Logging**
-- All logs are formatted as JSON for easy parsing and analysis
-- Consistent structure across all components
-- Timestamped entries with component identification
+### ✅ **Three-Tier Structured Logging**
+- **Data Analytics**: Metrics, patterns, mathematical insights
+- **LLM Operations**: Prompt optimization, model interactions, token usage  
+- **API Requests**: Endpoint performance, request/response cycles
 
-### ✅ **Multi-Level Logging**
-- **Application logs**: High-level flow and business logic
-- **Debug logs**: Detailed technical information
-- **Flow logs**: Code execution sequence and timing
-- **Performance logs**: Metrics and performance data
+### ✅ **JSONL Format**
+- Each log entry is a complete JSON object on its own line
+- Easy parsing with standard tools (jq, pandas, etc.)
+- Consistent structure across all log types
 
-### ✅ **Context-Aware Logging**
-- Request IDs for tracking requests across components
+### ✅ **Context-Aware Tracking**
+- Request IDs for end-to-end request tracking
 - Channel IDs for data-specific operations
-- Component identification for source tracking
+- Operation IDs for complex multi-step processes
 
-### ✅ **Presentation-Ready Insights**
-- Clear reasoning documentation
+### ✅ **Presentation-Ready Data**
+- Clear metrics and performance data
 - Decision-making process visibility
-- Performance metrics tracking
-- Data analysis step-by-step logging
+- Mathematical calculations and confidence scores
+- Token usage and cost tracking
 
 ## 📁 Log Files Structure
 
-The logging system creates the following log files in the `logs/` directory:
+The structured logging system creates three specialized JSONL files in the `logs/` directory:
 
 ```
 logs/
-├── titlecraft_app.log          # Main application flow (10MB, 5 backups)
-├── titlecraft_debug.log        # Detailed debugging info (50MB, 3 backups)
-├── titlecraft_flow.log         # Code execution flow (20MB, 5 backups)
-├── titlecraft_performance.log  # Performance metrics (30MB, 3 backups)
-└── performance_20241017.jsonl  # Legacy performance tracking
+├── data_analytics.jsonl     # Data analysis, metrics, patterns (50MB, 5 backups)
+├── llm_operations.jsonl     # LLM interactions, prompts, optimization (30MB, 5 backups)  
+├── api_requests.jsonl       # API endpoints, performance, requests (20MB, 5 backups)
+└── performance_YYYYMMDD.jsonl  # Legacy performance tracking (if enabled)
 ```
 
 ## 🔍 What Gets Logged
 
-### 1. **API Layer (`src/apis/app.py`)**
-- ✅ Request reception and validation
-- ✅ Service calls and responses
-- ✅ Error handling and HTTP responses
-- ✅ Response preparation and delivery
+### 📊 **Data Analytics Log (`data_analytics.jsonl`)**
+- **Pattern Discovery**: Channel classification, high-performer identification
+- **Performance Metrics**: Response times, calculation results, confidence scores  
+- **Mathematical Insights**: Statistical analysis, pattern confidence calculations
+- **Channel Analysis**: Video performance data, title success metrics
+- **Data Validation**: Loading status, data quality checks
 
-### 2. **Title Generation (`src/services/title_generator.py`)**
-- ✅ Complete generation pipeline flow
-- ✅ Model selection and LLM service creation
-- ✅ Data loading and channel analysis
-- ✅ Context-aware prompt selection
-- ✅ LLM interactions and responses
-- ✅ Quality evaluation and ranking
-- ✅ Individual title enhancement details
+### 🤖 **LLM Operations Log (`llm_operations.jsonl`)**  
+- **Prompt Construction**: System/user prompts, data injection, optimization strategies
+- **Model Interactions**: Request/response cycles, token usage, cost estimation
+- **Parameter Adaptation**: Temperature, max tokens, strategy selection reasoning
+- **Response Processing**: Content parsing, quality evaluation, enhancement steps
+- **Error Handling**: Model failures, retry attempts, fallback strategies
 
-### 3. **Context-Aware Prompts (`src/services/context_aware_prompts.py`)**
-- ✅ Strategy selection reasoning
-- ✅ Parameter adaptation logic
-- ✅ Prompt customization process
-- ✅ Decision-making context and confidence
-
-### 4. **Pattern Discovery (`src/services/pattern_discovery.py`)**
-- ✅ Channel classification logic
-- ✅ High-performer identification
-- ✅ Pattern analysis insights
-- ✅ Confidence scoring methodology
-
-### 5. **Data Processing (`src/data_module/data_processor.py`)**
-- ✅ Data loading and validation
-- ✅ Channel data retrieval
-- ✅ Statistics and analysis results
+### 🌐 **API Requests Log (`api_requests.jsonl`)**
+- **Request Lifecycle**: Start/end timestamps, HTTP methods, endpoints
+- **Performance Tracking**: Response times, status codes, payload sizes
+- **Error Monitoring**: Failed requests, error types, debugging context
+- **Service Integration**: External API calls, authentication, rate limiting
 
 ## 🚀 Usage Examples
 
-### Running the Logging Demo
+### Making API Requests with Logging
 
-```bash
-# Run the comprehensive logging demonstration
-python logging_demo.py
+The structured logging system automatically captures all activity when you make API requests:
+
+```python
+# Standard API usage - logging happens automatically
+from src.services.title_generator import TitleGenerator, TitleGenerationRequest
+
+generator = TitleGenerator()
+request = TitleGenerationRequest(
+    channel_id="UC510QYlOlKNyhy_zdQxnGYw", 
+    video_idea="How to master Python programming",
+    n_titles=3
+)
+response = generator.generate_titles(request)
 ```
-
-This demo will:
-1. Initialize all components with logging
-2. Make a complete title generation request
-3. Show the full logging flow
-4. Generate sample log entries across all components
 
 ### Analyzing Logs for Presentations
 
 ```bash
-# View recent application logs
-tail -f logs/titlecraft_app.log | jq '.'
+# View recent data analytics logs
+tail -f logs/data_analytics.jsonl | jq '.'
 
-# Filter logs by component
-grep '"component": "title_generator"' logs/titlecraft_app.log | jq '.'
+# Filter LLM operations by model
+jq 'select(.model=="gpt-4")' logs/llm_operations.jsonl
 
-# View performance metrics
-grep '"performance_metrics"' logs/titlecraft_app.log | jq '.performance_metrics'
+# Track API performance
+jq 'select(.event=="api_request_end") | {endpoint, status_code, response_time}' logs/api_requests.jsonl
 
-# Track a specific request
-grep '"request_id": "your-request-id"' logs/titlecraft_app.log | jq '.'
+# Find pattern analysis results
+jq 'select(.event=="pattern_analysis")' logs/data_analytics.jsonl
 ```
 
 ### Sample Log Entry Structure
@@ -146,87 +136,113 @@ grep '"request_id": "your-request-id"' logs/titlecraft_app.log | jq '.'
 
 ## 🛠️ Implementation Details
 
-### Decorators Used
+### Using Structured Logger
 
 ```python
-@log_execution_flow("operation_name", "component_name")
-def my_function():
-    # Automatically logs start, completion, timing, and errors
-    pass
+from src.services.structured_logger import structured_logger
 
-@log_data_analysis("analysis_type", "component_name") 
-def analyze_data():
-    # Logs analysis insights and results
-    pass
+class MyService:
+    def __init__(self):
+        self.logger = structured_logger
+        
+    def process_data(self, data):
+        # Log data analytics events
+        self.logger.log_data_analytics({
+            "event": "data_processing_start",
+            "data_size": len(data),
+            "processing_type": "analysis"
+        })
 ```
 
-### Manual Logging
+### Decorator Usage
 
 ```python
-from src.services.logger_config import titlecraft_logger
+from src.services.structured_logger import log_data_operation
 
-logger = titlecraft_logger.get_logger("my_component")
+@log_data_operation("channel_analysis", "data_processor")
+def analyze_channel_data(channel_id):
+    # Automatically logs operation with timing and results
+    return analysis_results
 
-logger.info("Processing started", extra={
-    'extra_fields': {
-        'component': 'my_component',
-        'action': 'process_start',
-        'data_size': len(data)
-    },
-    'request_id': request_id,
-    'channel_id': channel_id
-})
+@log_llm_operation("title_generation", "gpt-4")  
+def generate_titles(prompt):
+    # Logs LLM operations with model info
+    return generated_titles
 ```
 
-### Context-Aware Decision Logging
+### Manual Logging Examples
 
 ```python
-from src.services.logger_config import log_context_aware_decision
-
-log_context_aware_decision(
-    decision_type="strategy_selection",
-    reasoning="Selected educational strategy based on 73% how-to titles",
+# Data Analytics Logging
+structured_logger.log_pattern_analysis(
+    patterns={"keywords": ["python", "tutorial"], "avg_views": 15000},
     confidence=0.87,
-    component="prompt_selector"
+    channel_data={"total_videos": 150, "category": "education"}
+)
+
+# LLM Operations Logging
+structured_logger.log_llm_request(
+    model="gpt-4",
+    parameters={"temperature": 0.7, "max_tokens": 1500},
+    token_estimate=1200
+)
+
+# API Request Logging
+structured_logger.log_api_request_start(
+    endpoint="/generate-titles",
+    method="POST", 
+    request_data={"video_idea": "Python tutorial", "n_titles": 5}
 )
 ```
 
 ## 🔧 Configuration
 
-### Environment Variables
+### Log File Settings
 
-```env
-# Optional: Set log levels
-TITLECRAFT_LOG_LEVEL=INFO
+The system automatically creates and manages three JSONL log files with the following rotation settings:
 
-# Optional: Custom log directory  
-TITLECRAFT_LOG_DIR=/path/to/logs
-```
+- **data_analytics.jsonl**: 50MB max size, 5 backup files
+- **llm_operations.jsonl**: 30MB max size, 5 backup files  
+- **api_requests.jsonl**: 20MB max size, 5 backup files
 
 ### Customization
 
-The logging system can be customized by modifying `src/services/logger_config.py`:
+The logging system can be customized by modifying `src/services/structured_logger.py`:
 
-- Adjust log file sizes and rotation
-- Add new log file categories
-- Modify JSON structure
-- Add new logging decorators
+- Adjust log file sizes and backup counts
+- Add new specialized loggers
+- Create custom logging methods
+- Modify JSONL entry structure
+- Add new decorators for automatic logging
 
 ## 📊 Log Analysis Tips
 
 ### For Presentations
 
-1. **Show the Flow**: Use grep/jq to extract the complete request flow
-2. **Highlight Decisions**: Focus on context-aware decision logs
-3. **Performance Metrics**: Extract timing and token usage
-4. **Reasoning Visibility**: Show how AI reasoning is captured
+1. **Data Flow**: Show pattern discovery and analysis insights from `data_analytics.jsonl`
+2. **LLM Decisions**: Highlight prompt strategies and model reasoning from `llm_operations.jsonl`
+3. **Performance Metrics**: Extract response times and token usage across all logs
+4. **End-to-End Tracking**: Follow request_id through all three log files
 
 ### For Debugging
 
-1. **Request Tracking**: Follow a request_id through all components
-2. **Error Analysis**: Check error logs with full context
-3. **Performance Issues**: Analyze timing data across operations
-4. **Component Health**: Monitor initialization and health logs
+1. **Cross-Log Analysis**: Correlate events across data/LLM/API logs using request_id
+2. **Performance Bottlenecks**: Identify slow operations in data processing or LLM calls
+3. **Error Patterns**: Analyze error events and their contexts
+4. **Token Usage**: Monitor LLM costs and usage patterns over time
+
+### Sample Analysis Commands
+
+```bash
+# Find all events for a specific request
+grep '"request_id":"abc123"' logs/*.jsonl | jq '.'
+
+# Get token usage summary
+jq 'select(.tokens_used) | {model, tokens_used, cost}' logs/llm_operations.jsonl
+
+# Performance analysis by event type  
+jq 'select(.response_time) | {event, response_time}' logs/api_requests.jsonl | jq -s 'sort_by(.response_time)'
+```
 
 ## 🎯 Conclusion
 
