@@ -1,18 +1,28 @@
 """
-Title Generator
+Intelligent Title Generator
 
-Orchestrates data loading, LLM service, prompt management, and performance tracking
+Orchestrates intelligent pattern discovery, context-aware generation, and quality evaluation
 """
 
 from typing import List, Dict, Any, Optional
 import time
 from dataclasses import dataclass
+import uuid
 
 from src.data_module.data_processor import DataLoader, GeneratedTitle
 from .llm_config import config_manager
 from .llm_service import create_system_message, create_human_message, LLMGenerationError
-from .prompt_manager import prompt_manager, create_title_generation_variables
 from .performance_tracker import performance_tracker
+from .pattern_discovery import PatternDiscoveryAgent
+from .context_aware_prompts import ContextAwarePromptSelector
+from .title_quality_evaluator import TitleQualityEvaluator
+from .logger_config import (
+    titlecraft_logger, 
+    log_execution_flow, 
+    log_data_analysis, 
+    log_context_aware_decision,
+    log_llm_interaction
+)
 
 @dataclass
 class TitleGenerationRequest:
@@ -42,51 +52,245 @@ class TitleGenerationResponse:
 
 
 class TitleGenerator:
-    """Title generator with LLM integration and performance tracking"""
+    """Intelligent title generator with pattern discovery, context-aware generation, and quality evaluation"""
 
     def __init__(self, default_model: Optional[str] = None):
-        """Initialize the title generator"""
+        """Initialize the intelligent title generator"""
+        self.logger = titlecraft_logger.get_logger("title_generator")
         self.data_loader = DataLoader()
         self.default_model = default_model or "DeepSeek-R1-Distill-Qwen-32B"
+        self.current_request_id = None  # Track current request for logging context
+        
+        # Initialize intelligent components
+        self.pattern_agent = PatternDiscoveryAgent()
+        self.prompt_selector = ContextAwarePromptSelector()
+        self.quality_evaluator = TitleQualityEvaluator()
+        
+        self.logger.info("TitleGenerator initialized", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'default_model': self.default_model,
+                'action': 'initialization'
+            }
+        })
 
+    @log_execution_flow("title_generation", "title_generator")
     def generate_titles(self, request: TitleGenerationRequest) -> TitleGenerationResponse:
         """Generate titles for a video idea based on channel patterns"""
         start_time = time.time()
+        self.current_request_id = str(uuid.uuid4())
+
+        self.logger.info("Starting title generation process", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'action': 'generate_start',
+                'video_idea': request.video_idea,
+                'n_titles': request.n_titles,
+                'model_name': request.model_name,
+                'temperature': request.temperature,
+                'max_tokens': request.max_tokens
+            },
+            'request_id': self.current_request_id,
+            'channel_id': request.channel_id
+        })
 
         try:
-            return self._generate_titles_success(request, start_time)
+            response = self._generate_titles_success(request, start_time)
+            
+            self.logger.info("Title generation completed successfully", extra={
+                'extra_fields': {
+                    'component': 'title_generator',
+                    'action': 'generate_success',
+                    'titles_generated': len(response.titles),
+                    'model_used': response.model_used,
+                    'total_time': response.response_time,
+                    'tokens_used': response.tokens_used,
+                    'estimated_cost': response.estimated_cost
+                },
+                'request_id': self.current_request_id,
+                'channel_id': request.channel_id
+            })
+            
+            return response
+            
         except Exception as e:
+            self.logger.error("Title generation failed", extra={
+                'extra_fields': {
+                    'component': 'title_generator',
+                    'action': 'generate_error',
+                    'error_type': type(e).__name__,
+                    'error_message': str(e)
+                },
+                'request_id': self.current_request_id,
+                'channel_id': request.channel_id
+            })
+            
             return self._generate_titles_error(request, e, start_time)
 
     def _generate_titles_success(self, request: TitleGenerationRequest, start_time: float) -> TitleGenerationResponse:
-        """Handle successful title generation"""
+        """Handle successful intelligent title generation"""
         model_name = request.model_name or self.default_model
+        
+        self.logger.info("Creating LLM service", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'action': 'llm_service_creation',
+                'model_name': model_name
+            },
+            'request_id': self.current_request_id,
+            'channel_id': request.channel_id
+        })
+        
         llm_service = config_manager.create_llm_service(model_name)
         
-        # Prepare data and prompts
+        # Get intelligent patterns for context-aware generation
+        self.logger.info("Loading channel data for pattern discovery", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'action': 'data_loading'
+            },
+            'request_id': self.current_request_id,
+            'channel_id': request.channel_id
+        })
+        
+        channel_videos = self.data_loader.get_channel_data(request.channel_id)
+        
+        self.logger.info("Channel data loaded", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'action': 'data_loaded',
+                'videos_count': len(channel_videos)
+            },
+            'request_id': self.current_request_id,
+            'channel_id': request.channel_id
+        })
+        
+        intelligent_patterns = self.pattern_agent.discover_patterns(channel_videos)
+        
+        # Get context-aware prompt and parameters
+        contextual_prompt = self.prompt_selector.select_optimal_context(intelligent_patterns)
+        
+        self.logger.info("Context-aware prompt selected", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'action': 'prompt_selection',
+                'strategy': contextual_prompt.strategy.value,
+                'temperature': contextual_prompt.parameters.temperature,
+                'max_tokens': contextual_prompt.parameters.max_tokens
+            },
+            'request_id': self.current_request_id,
+            'channel_id': request.channel_id
+        })
+        
+        # Prepare messages and generation parameters
         messages = self._prepare_messages(request)
-        generation_kwargs = self._prepare_generation_kwargs(request)
+        generation_kwargs = self._prepare_intelligent_generation_kwargs(request, contextual_prompt)
+        
+        # Log LLM interaction details
+        log_llm_interaction(
+            model_name=model_name,
+            prompt_type=contextual_prompt.strategy.value,
+            component="title_generator"
+        )
+        
+        self.logger.info("Sending request to LLM", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'action': 'llm_request',
+                'generation_kwargs': generation_kwargs
+            },
+            'request_id': self.current_request_id,
+            'channel_id': request.channel_id
+        })
         
         # Generate and parse response
         llm_response = llm_service.generate(messages, **generation_kwargs)
+        
+        self.logger.info("LLM response received", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'action': 'llm_response',
+                'response_length': len(llm_response.content),
+                'tokens_used': llm_response.tokens_used,
+                'cost': llm_response.cost
+            },
+            'request_id': self.current_request_id,
+            'channel_id': request.channel_id
+        })
+        
         generated_titles = self._parse_llm_response(llm_response.content)
         
-        # Track and return results
+        self.logger.info("Titles parsed from LLM response", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'action': 'title_parsing',
+                'titles_parsed': len(generated_titles)
+            },
+            'request_id': self.current_request_id,
+            'channel_id': request.channel_id
+        })
+        
+        # Intelligent quality evaluation and ranking
+        title_scores = self.quality_evaluator.evaluate_and_rank_titles(generated_titles, intelligent_patterns)
+        
+        self.logger.info("Quality evaluation completed", extra={
+            'extra_fields': {
+                'component': 'title_generator',
+                'action': 'quality_evaluation',
+                'scores_computed': len(title_scores),
+                'top_score': title_scores[0].overall_score if title_scores else None,
+                'avg_confidence': sum(score.confidence_score for score in title_scores) / len(title_scores) if title_scores else None
+            },
+            'request_id': self.current_request_id,
+            'channel_id': request.channel_id
+        })
+        
+        # Convert to GeneratedTitle objects with enhanced reasoning
+        enhanced_titles = []
+        for i, score in enumerate(title_scores[:request.n_titles]):
+            enhanced_title = GeneratedTitle(
+                title=score.title,
+                reasoning=f"{score.reasoning} [Performance: {score.predicted_performance}, Score: {score.overall_score:.2f}, Confidence: {score.confidence_score:.1%}]",
+                confidence_score=score.confidence_score,
+                model_used=model_name
+            )
+            enhanced_titles.append(enhanced_title)
+            
+            # Log individual title details
+            self.logger.info(f"Enhanced title {i+1}", extra={
+                'extra_fields': {
+                    'component': 'title_generator',
+                    'action': 'title_enhancement',
+                    'title_index': i+1,
+                    'title': score.title,
+                    'confidence': score.confidence_score,
+                    'overall_score': score.overall_score,
+                    'predicted_performance': score.predicted_performance
+                },
+                'request_id': self.current_request_id,
+                'channel_id': request.channel_id
+            })
+        
+        # Track performance
         response_time = time.time() - start_time
         request_id = performance_tracker.track_request(
             system_prompt=messages[0].content,
             user_prompt=messages[1].content,
             llm_response=llm_response,
-            prompt_template="title_generation",
+            prompt_template=f"intelligent_{contextual_prompt.strategy.value}",
             additional_metadata={
                 "channel_id": request.channel_id,
                 "video_idea": request.video_idea,
-                "n_titles": request.n_titles
+                "n_titles": request.n_titles,
+                "channel_type": intelligent_patterns.channel_type,
+                "content_style": intelligent_patterns.content_style,
+                "pattern_confidence": intelligent_patterns.confidence_score,
+                "avg_title_score": sum(s.overall_score for s in title_scores[:request.n_titles]) / min(len(title_scores), request.n_titles)
             }
         )
         
         return TitleGenerationResponse(
-            titles=generated_titles[:request.n_titles],
+            titles=enhanced_titles,
             request_id=request_id,
             model_used=model_name,
             provider=llm_service.config.provider.value,
@@ -130,33 +334,96 @@ class TitleGenerator:
         )
 
     def _prepare_messages(self, request: TitleGenerationRequest):
-        """Prepare messages for LLM generation"""
-        channel_analysis = self.data_loader.analyze_channel(request.channel_id)
+        """Prepare intelligent context-aware messages for LLM generation"""
+        # Get channel data and discover intelligent patterns
+        channel_videos = self.data_loader.get_channel_data(request.channel_id)
+        intelligent_patterns = self.pattern_agent.discover_patterns(channel_videos)
         
-        prompt_variables = create_title_generation_variables(
-            channel_id=request.channel_id,
-            video_idea=request.video_idea,
+        # Select optimal prompt based on discovered patterns
+        contextual_prompt = self.prompt_selector.select_optimal_context(intelligent_patterns)
+        
+        # Format channel analysis for prompt
+        channel_analysis = self._format_intelligent_analysis(intelligent_patterns, channel_videos)
+        
+        # Format prompts with variables
+        system_prompt = contextual_prompt.system_prompt
+        user_prompt = contextual_prompt.user_prompt_template.format(
             channel_analysis=channel_analysis,
-            n_titles=request.n_titles,
-        )
-        
-        system_prompt, user_prompt = prompt_manager.format_prompt(
-            template_name="title_generation",
-            variables=prompt_variables
+            video_idea=request.video_idea,
+            n_titles=request.n_titles
         )
         
         return [
             create_system_message(system_prompt),
             create_human_message(user_prompt),
         ]
+    
+    def _format_intelligent_analysis(self, patterns, channel_videos) -> str:
+        """Format intelligent channel analysis for prompt"""
+        
+        analysis_parts = []
+        
+        # Basic channel info
+        analysis_parts.append(f"Channel Type: {patterns.channel_type.replace('_', ' ').title()}")
+        analysis_parts.append(f"Content Style: {patterns.content_style.replace('_', ' ').title()}")
+        analysis_parts.append(f"Total Videos Analyzed: {len(channel_videos)}")
+        
+        if channel_videos:
+            views = [v.views_in_period for v in channel_videos]
+            analysis_parts.append(f"Average Views: {sum(views)/len(views):,.0f}")
+            analysis_parts.append(f"Top Performer Views: {max(views):,.0f}")
+        
+        # Pattern insights
+        analysis_parts.append(f"\nSUCCESS PATTERNS (Confidence: {patterns.confidence_score:.1%}):")
+        analysis_parts.append(f"• Optimal Word Count: ~{patterns.avg_word_count:.0f} words")
+        analysis_parts.append(f"• Question Usage: {patterns.question_percentage:.0%} effective rate")
+        analysis_parts.append(f"• Number Usage: {patterns.numeric_percentage:.0%} effective rate")
+        analysis_parts.append(f"• Exclamation Usage: {patterns.exclamation_percentage:.0%} effective rate")
+        
+        if patterns.top_keywords:
+            analysis_parts.append(f"• High-Performing Keywords: {', '.join(patterns.top_keywords[:8])}")
+        
+        # Pattern weights (for transparency)
+        weights = patterns.pattern_weights
+        analysis_parts.append("\nPATTERN IMPORTANCE WEIGHTS:")
+        analysis_parts.append(f"• Word Count: {weights.word_count_weight:.2f}")
+        analysis_parts.append(f"• Questions: {weights.question_weight:.2f}")
+        analysis_parts.append(f"• Numbers: {weights.numeric_weight:.2f}")
+        analysis_parts.append(f"• Keywords: {weights.keyword_weight:.2f}")
+        
+        return "\n".join(analysis_parts)
 
     def _prepare_generation_kwargs(self, request: TitleGenerationRequest) -> dict:
-        """Prepare generation parameters"""
+        """Prepare basic generation parameters"""
         kwargs = {}
         if request.temperature is not None:
             kwargs["temperature"] = request.temperature
         if request.max_tokens is not None:
             kwargs["max_tokens"] = request.max_tokens
+        return kwargs
+    
+    def _prepare_intelligent_generation_kwargs(self, request: TitleGenerationRequest, contextual_prompt) -> dict:
+        """Prepare intelligent context-aware generation parameters"""
+        # Use adaptive parameters from context-aware prompt selector
+        adaptive_params = contextual_prompt.parameters
+        
+        kwargs = {
+            "temperature": adaptive_params.temperature,
+            "max_tokens": adaptive_params.max_tokens
+        }
+        
+        # Override with user-specified parameters if provided
+        if request.temperature is not None:
+            kwargs["temperature"] = request.temperature
+        if request.max_tokens is not None:
+            kwargs["max_tokens"] = request.max_tokens
+            
+        # Add optional parameters if supported
+        if adaptive_params.top_p is not None:
+            kwargs["top_p"] = adaptive_params.top_p
+        if adaptive_params.presence_penalty is not None:
+            kwargs["presence_penalty"] = adaptive_params.presence_penalty
+        
         return kwargs
 
     def _parse_llm_response(self, response_text: str) -> List[GeneratedTitle]:

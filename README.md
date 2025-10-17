@@ -6,19 +6,16 @@ Production-ready YouTube title generation powered by DeepSeek AI with support fo
 
 
 
-## 🚀 Features**A streamlined agentic workflow that learns from high-performing YouTube titles and generates optimized titles for new video ideas.****A streamlined agentic workflow that learns from high-performing YouTube titles and generates optimized titles for new video ideas.**
+## 🚀 Features
 
+**An intelligent title generation pipeline that learns from high-performing YouTube titles and generates optimized, ranked titles for new video ideas.**
 
-
+- **Intelligent Pattern Discovery**: Dynamically analyzes channel performance patterns with adaptive weighting
+- **Context-Aware Generation**: Selects optimal prompts and parameters based on channel characteristics  
+- **Quality-Driven Ranking**: Evaluates and ranks titles with confidence scores and performance predictions
 - **DeepSeek Default**: Fast, efficient title generation with DeepSeek R1 model
-
 - **Multi-Model Support**: Alternative models available via dedicated endpoint
-
-- **Data-Driven**: Channel analysis for context-aware title generation## 🚀 Quick Start
-
-- **Production Ready**: Clean API, error handling, and performance tracking
-
-- **RESTful API**: Simple integration with comprehensive documentation## 🚀 Quick Start
+- **Production Ready**: Clean API, error handling, and comprehensive performance tracking## 🚀 Quick Start
 
 
 
@@ -190,55 +187,83 @@ curl -X POST "http://localhost:8000/generate-with-model?model=openai-gpt4" \
 
 - `anthropic-claude`: Anthropic Claude 3 Sonnet
 
-- `hf-mistral`: Mistral 7B Instruct## 🏗️ Architecture- **LLM service status**: http://localhost:8000/llm/status
+- `hf-mistral`: Mistral 7B Instruct
 
+## 🏗️ Architecture: Intelligent Title Generation Pipeline
 
+TitleCraft AI implements a sophisticated intelligent pipeline with three core components:
+
+### 1. 🧠 Adaptive Pattern Discovery
+- **Intelligent Channel Analysis**: Dynamically analyzes channel performance data to discover what makes titles successful
+- **Pattern Weighting**: Automatically calculates importance weights for different title patterns based on performance correlation
+- **Channel Classification**: Identifies channel type (high/medium/low volume) and content style (educational/entertainment/mixed)
+- **Confidence Scoring**: Provides confidence levels based on data quality and volume
+
+### 2. 🎯 Context-Aware Generation  
+- **Smart Prompt Selection**: Chooses optimal prompt strategies based on discovered channel characteristics
+- **Adaptive Parameters**: Automatically adjusts LLM temperature, tokens, and other parameters for different content types
+- **Strategy Optimization**: Uses different generation approaches for educational vs entertainment vs mixed content channels
+- **Dynamic Contextualization**: Incorporates channel-specific insights into generation prompts
+
+### 3. 📊 Quality-Driven Ranking
+- **Pattern-Based Evaluation**: Scores generated titles against discovered success patterns
+- **Performance Prediction**: Predicts likely performance (high/medium/low) with confidence intervals
+- **Intelligent Ranking**: Ranks titles by predicted performance using weighted pattern analysis
+- **Detailed Insights**: Provides strengths, recommendations, and reasoning for each title
+
+### 🔄 Pipeline Flow
+```
+Channel Data → Pattern Discovery → Context Selection → LLM Generation → Quality Evaluation → Ranked Results
+```
+
+### 🧩 Key Benefits
+- **Adaptive Intelligence**: Learns and adapts to each channel's unique characteristics
+- **Data-Driven Decisions**: All recommendations backed by performance correlation analysis  
+- **Quality Assurance**: Every title evaluated and ranked before delivery
+- **Transparent Reasoning**: Clear explanations for why titles should perform well
 
 ## 📊 Example Response
 
-
-
-```json```## 🔧 Enhanced LLM Service
-
+```json
 {
-
-  "titles": [📁 TitleCraft AI/
-
+  "titles": [
     {
-
-      "title": "Master Python in 30 Days: Complete Beginner's Roadmap",├── 📊 electrify__applied_ai_engineer__training_data.csv  # YouTube dataTitleCraft AI now includes a powerful LangChain-based LLM service with multiple provider support:
-
-      "reasoning": "Uses time-bound promise and appeals to beginners seeking structured learning",
-
-      "confidence_score": 0.92,├── 📦 requirements.txt                                   # Dependencies  
-
+      "title": "Master Python in 30 Days: Complete Beginner's Roadmap",
+      "reasoning": "Strong alignment with successful patterns from this channel. Strong in: word_count, keyword_match, numeric_usage. High confidence in predictions due to robust channel data. [Performance: high, Score: 0.89, Confidence: 87%]",
+      "confidence_score": 0.87,
       "model_used": "DeepSeek-R1-Distill-Qwen-32B"
-
-    }├── 📖 README.md                                         # Documentation### Supported Providers
-
+    },
+    {
+      "title": "5 Python Projects That Will Land You a Job (Beginner to Pro)",
+      "reasoning": "Good alignment with channel patterns, with room for optimization. Strong in: numeric_usage, keyword_match. Could improve: question_usage. [Performance: high, Score: 0.85, Confidence: 83%]",
+      "confidence_score": 0.83,
+      "model_used": "DeepSeek-R1-Distill-Qwen-32B"
+    }
   ],
-
-  "channel_id": "UC_example123",├── 📂 src/- **OpenAI**: GPT-3.5-turbo, GPT-4 (fast and reliable)
-
-  "idea": "How to learn Python programming", 
-
-  "request_id": "req_abc123",│   ├── 📂 apis/- **Anthropic**: Claude-3 models (advanced reasoning)
-
+  "channel_id": "UC_example123",
+  "idea": "How to learn Python programming",
+  "request_id": "req_abc123",
   "model_used": "DeepSeek-R1-Distill-Qwen-32B",
-
-  "provider": "huggingface",│   │   └── 🎯 app.py                                    # FastAPI application- **Ollama**: Local models (privacy-focused)
-
+  "provider": "huggingface",
   "response_time": 2.34,
-
-  "tokens_used": 245,│   ├── 📂 data_module/
-
+  "tokens_used": 245,
   "estimated_cost": 0.0012,
-
-  "success": true│   │   └── 📊 data_processor.py                         # Data analysis### Key Features
-
+  "success": true
 }
+```
 
-```│   └── 📂 services/- **LangSmith Tracing**: Monitor and debug LLM interactions
+## 🔧 Enhanced LLM Service
+
+TitleCraft AI includes a powerful LangChain-based LLM service with multiple provider support:
+
+### Supported Providers
+- **OpenAI**: GPT-3.5-turbo, GPT-4 (fast and reliable)
+- **Anthropic**: Claude-3 models (advanced reasoning)  
+- **HuggingFace**: DeepSeek, Mistral (cost-effective)
+- **Ollama**: Local models (privacy-focused)
+
+### Key Features
+- **LangSmith Tracing**: Monitor and debug LLM interactions
 
 
 

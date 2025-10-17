@@ -4,8 +4,7 @@ Production-ready YouTube title generation with DeepSeek as default model
 """
 
 from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+from typing import Any
 import uvicorn
 
 from src.services.title_generator import (
@@ -13,81 +12,19 @@ from src.services.title_generator import (
     TitleGenerationRequest,
     TitleGenerationResponse,
 )
+from src.apis.models import (
+    TitleRequest,
+    TitleResponseItem,
+    GenerationResponse,
+    ModelInfo,
+    AvailableModelsResponse,
+)
+from src.services.logger_config import titlecraft_logger, log_execution_flow
 
 # Constants
 SERVICE_NAME = "TitleCraft AI"
 SERVICE_VERSION = "2.0.0"
 DEFAULT_MODEL = "DeepSeek-R1-Distill-Qwen-32B" # for reasoning-heavy tasks
-
-
-# Request/Response Models
-class TitleRequest(BaseModel):
-    """Request model for title generation"""
-
-    channel_id: str = Field(..., description="YouTube channel ID")
-    idea: str = Field(..., description="Single-sentence video idea or topic")
-    n_titles: int = Field(4, description="Number of titles to generate (1-10)")
-    temperature: Optional[float] = Field(
-        None, description="Model temperature (0.0-1.0)"
-    )
-    max_tokens: Optional[int] = Field(None, description="Maximum tokens to generate")
-
-
-class TitleResponseItem(BaseModel):
-    """Individual title in response"""
-    
-    model_config = {"protected_namespaces": ()}
-
-    title: str = Field(..., description="Generated title")
-    reasoning: str = Field(..., description="Data-grounded reasoning for this title")
-    confidence_score: float = Field(..., description="Confidence score (0.0-1.0)")
-    model_used: str = Field(..., description="Model used to generate this title")
-
-
-class GenerationResponse(BaseModel):
-    """Response model for title generation"""
-    
-    model_config = {"protected_namespaces": ()}
-
-    titles: List[TitleResponseItem] = Field(
-        ..., description="Generated titles with reasoning"
-    )
-    channel_id: str = Field(..., description="Channel ID processed")
-    idea: str = Field(..., description="Video idea processed")
-    request_id: str = Field(..., description="Unique request ID for tracking")
-    model_used: str = Field(..., description="LLM model used")
-    provider: str = Field(..., description="LLM provider used")
-    response_time: float = Field(..., description="Response time in seconds")
-    tokens_used: Optional[int] = Field(None, description="Number of tokens used")
-    estimated_cost: Optional[float] = Field(None, description="Estimated cost in USD")
-    success: bool = Field(..., description="Whether generation was successful")
-    error_message: Optional[str] = Field(
-        None, description="Error message if generation failed"
-    )
-
-
-class ModelInfo(BaseModel):
-    """Model information"""
-    
-    model_config = {"protected_namespaces": ()}
-
-    name: str
-    provider: str
-    model_name: str
-    description: str
-    use_case: str
-    temperature: float
-    max_tokens: int
-
-
-class AvailableModelsResponse(BaseModel):
-    """Response for available models"""
-
-    models: Dict[str, ModelInfo] = Field(..., description="Available models")
-    default_model: str = Field(..., description="Default model name")
-
-
-
 
 
 # Initialize FastAPI app
@@ -97,12 +34,26 @@ app = FastAPI(
     version=SERVICE_VERSION,
 )
 
+# Initialize logging for API
+api_logger = titlecraft_logger.get_logger("api")
+
 # Initialize the title generator with DeepSeek as default
 title_generator = TitleGenerator()
+
+api_logger.info("FastAPI application initialized", extra={
+    'extra_fields': {
+        'component': 'api',
+        'action': 'app_initialization',
+        'service_name': SERVICE_NAME,
+        'service_version': SERVICE_VERSION,
+        'default_model': DEFAULT_MODEL
+    }
+})
 
 
 
 @app.post("/generate", response_model=GenerationResponse)
+@log_execution_flow("api_generate_default", "api")
 async def generate_titles_default(request: TitleRequest) -> GenerationResponse:
     """
     Generate optimized YouTube titles using the default DeepSeek model.
@@ -113,6 +64,19 @@ async def generate_titles_default(request: TitleRequest) -> GenerationResponse:
     Returns:
         GenerationResponse: Generated titles with metadata
     """
+    api_logger.info("Received title generation request (default model)", extra={
+        'extra_fields': {
+            'component': 'api',
+            'endpoint': '/generate',
+            'action': 'request_received',
+            'n_titles': request.n_titles,
+            'temperature': request.temperature,
+            'max_tokens': request.max_tokens,
+            'idea_length': len(request.idea)
+        },
+        'channel_id': request.channel_id
+    })
+    
     try:
         # Create title generation request with default DeepSeek model
         gen_request = TitleGenerationRequest(
@@ -124,8 +88,33 @@ async def generate_titles_default(request: TitleRequest) -> GenerationResponse:
             max_tokens=request.max_tokens,
         )
 
+        api_logger.info("Calling title generator", extra={
+            'extra_fields': {
+                'component': 'api',
+                'endpoint': '/generate',
+                'action': 'calling_title_generator',
+                'model_name': DEFAULT_MODEL
+            },
+            'channel_id': request.channel_id
+        })
+
         # Generate titles
         response = title_generator.generate_titles(gen_request)
+
+        api_logger.info("Title generation completed", extra={
+            'extra_fields': {
+                'component': 'api',
+                'endpoint': '/generate',
+                'action': 'generation_completed',
+                'success': response.success,
+                'titles_count': len(response.titles),
+                'response_time': response.response_time,
+                'tokens_used': response.tokens_used,
+                'estimated_cost': response.estimated_cost
+            },
+            'channel_id': request.channel_id,
+            'request_id': response.request_id
+        })
 
         # Convert GeneratedTitle objects to TitleResponseItem
         title_items = [
@@ -138,7 +127,7 @@ async def generate_titles_default(request: TitleRequest) -> GenerationResponse:
             for title in response.titles
         ]
 
-        return GenerationResponse(
+        api_response = GenerationResponse(
             titles=title_items,
             channel_id=request.channel_id,
             idea=request.idea,
@@ -152,7 +141,30 @@ async def generate_titles_default(request: TitleRequest) -> GenerationResponse:
             error_message=response.error_message,
         )
 
+        api_logger.info("API response prepared successfully", extra={
+            'extra_fields': {
+                'component': 'api',
+                'endpoint': '/generate',
+                'action': 'response_prepared'
+            },
+            'channel_id': request.channel_id,
+            'request_id': response.request_id
+        })
+
+        return api_response
+
     except Exception as e:
+        api_logger.error("Title generation failed in API", extra={
+            'extra_fields': {
+                'component': 'api',
+                'endpoint': '/generate',
+                'action': 'generation_error',
+                'error_type': type(e).__name__,
+                'error_message': str(e)
+            },
+            'channel_id': request.channel_id
+        })
+        
         raise HTTPException(
             status_code=500, detail=f"Title generation failed: {str(e)}"
         )
