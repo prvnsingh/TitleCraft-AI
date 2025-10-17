@@ -171,8 +171,11 @@ class LLMService(BaseLLM):
                 "traceback": traceback.format_exc()
             }, level="ERROR")
             
-            # If model fails due to task/provider mismatch, try alternative configurations
-            if "not supported for task" in str(e) and "conversational" in str(e):
+            # Handle different types of API errors with appropriate retry strategies
+            error_str = str(e).lower()
+            
+            # Task not supported error - try conversational task
+            if "not supported for task" in error_str and "conversational" in error_str:
                 self.logger.log_llm_operations({
                     "event": "llm_retry_attempt",
                     "message": f"Model {self.config.model_name} requires conversational task, retrying with ChatHuggingFace...",
@@ -194,6 +197,33 @@ class LLMService(BaseLLM):
                     self.logger.log_llm_operations({
                         "event": "llm_retry_failed",
                         "message": f"Retry with conversational task also failed: {str(retry_e)}",
+                        "model": self.config.model_name,
+                        "retry_error": str(retry_e)
+                    }, level="ERROR")
+            
+            # max_tokens parameter error - try with max_new_tokens
+            elif "unexpected keyword argument" in error_str and "max_tokens" in error_str:
+                self.logger.log_llm_operations({
+                    "event": "llm_retry_attempt",
+                    "message": f"Model {self.config.model_name} doesn't accept max_tokens, trying without it...",
+                    "model": self.config.model_name,
+                    "retry_strategy": "parameter_adjustment"
+                }, level="WARNING")
+                try:
+                    api_key = self._get_api_key("HUGGINGFACE")
+                    # Try without max_tokens parameter
+                    hf_endpoint = HuggingFaceEndpoint(
+                        repo_id=self.config.model_name,
+                        task="text-generation",
+                        temperature=self.config.temperature,
+                        huggingfacehub_api_token=api_key,
+                        provider="auto",
+                    )
+                    return hf_endpoint
+                except Exception as retry_e:
+                    self.logger.log_llm_operations({
+                        "event": "llm_retry_failed",
+                        "message": f"Retry without max_tokens also failed: {str(retry_e)}",
                         "model": self.config.model_name,
                         "retry_error": str(retry_e)
                     }, level="ERROR")

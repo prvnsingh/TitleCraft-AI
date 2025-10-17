@@ -60,6 +60,7 @@ class IntelligentPatterns:
     channel_type: str  # "high_volume", "medium_volume", "low_volume"
     content_style: str  # "educational", "entertainment", "mixed"
     confidence_score: float
+    avg_views: float  # Added missing avg_views attribute
 
 
 class PatternDiscoveryAgent:
@@ -133,6 +134,9 @@ class PatternDiscoveryAgent:
         # Calculate confidence based on data quality
         confidence = self._calculate_confidence(videos, high_performers)
         
+        # Calculate average views for the channel
+        avg_views = np.mean([v.views_in_period for v in videos]) if videos else 0.0
+        
         return IntelligentPatterns(
             avg_word_count=patterns['avg_word_count'],
             question_percentage=patterns['question_percentage'],
@@ -143,7 +147,8 @@ class PatternDiscoveryAgent:
             pattern_weights=weights,
             channel_type=channel_type,
             content_style=content_style,
-            confidence_score=confidence
+            confidence_score=confidence,
+            avg_views=avg_views
         )
     
     def _classify_channel_type(self, videos: List[VideoData]) -> str:
@@ -374,7 +379,8 @@ class PatternDiscoveryAgent:
             pattern_weights=self._get_default_weights(),
             channel_type="low_volume",
             content_style="mixed",
-            confidence_score=0.1
+            confidence_score=0.1,
+            avg_views=1000.0  # Default average views
         )
     
     def _get_default_pattern_dict(self) -> Dict[str, Any]:

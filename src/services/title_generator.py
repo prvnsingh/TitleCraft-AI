@@ -133,7 +133,6 @@ class TitleGenerator:
             'channel_id': request.channel_id
         })
         
-        llm_service = config_manager.create_llm_service(model_name)
         
         # Get intelligent patterns for context-aware generation
         self.logger.info("Loading channel data for pattern discovery", extra={
@@ -178,6 +177,7 @@ class TitleGenerator:
         messages = self._prepare_messages(request)
         generation_kwargs = self._prepare_intelligent_generation_kwargs(request, contextual_prompt)
         
+        llm_service = config_manager.create_llm_service(model_name)
         # Log LLM request details
         self.logger.log_llm_request(
             model=model_name,
